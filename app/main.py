@@ -1,13 +1,13 @@
 from fastapi import FastAPI, Request, Response
 from contextlib import asynccontextmanager
 from aiogram.types import Update
-from app.bot.router import bot, dp, setup_webhook, shutdown
+from app.bot.router import bot, dp, shutdown
 from app.config import settings
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await setup_webhook()
+    # Webhook устанавливается вручную через /set-webhook endpoint
     yield
     await shutdown()
 
@@ -33,14 +33,32 @@ async def health():
     return {"status": "healthy"}
 
 
+@app.post("/set-webhook")
+async def set_webhook():
+    """Установить webhook вручную"""
+    try:
+        await bot.set_webhook(settings.WEBHOOK_URL, drop_pending_updates=True)
+        info = await bot.get_webhook_info()
+        return {
+            "status": "ok",
+            "webhook_url": info.url,
+            "pending_update_count": info.pending_update_count
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
 @app.get("/webhook-info")
 async def webhook_info():
     """Проверка webhook"""
-    info = await bot.get_webhook_info()
-    return {
-        "url": info.url,
-        "has_custom_certificate": info.has_custom_certificate,
-        "pending_update_count": info.pending_update_count,
-        "last_error_date": info.last_error_date,
-        "last_error_message": info.last_error_message
-    }
+    try:
+        info = await bot.get_webhook_info()
+        return {
+            "url": info.url,
+            "has_custom_certificate": info.has_custom_certificate,
+            "pending_update_count": info.pending_update_count,
+            "last_error_date": info.last_error_date,
+            "last_error_message": info.last_error_message
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
