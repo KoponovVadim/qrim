@@ -140,9 +140,11 @@ class SheetsClient:
     def get_prices(self, category: Optional[str] = None) -> List[Price]:
         """Возвращает активные цены, опционально по категории"""
         rows = self._read_range('prices!A2:H')
+        print(f"DEBUG: read {len(rows)} rows from prices sheet", flush=True)
         prices = []
         
-        for row in rows:
+        for idx, row in enumerate(rows):
+            print(f"DEBUG: row {idx}: len={len(row)}, data={row}", flush=True)
             if len(row) >= 8:
                 active = row[7].upper() == 'TRUE'
                 price_category = row[1]
@@ -159,6 +161,7 @@ class SheetsClient:
                         active=active
                     ))
         
+        print(f"DEBUG: returning {len(prices)} prices", flush=True)
         return prices
 
 
