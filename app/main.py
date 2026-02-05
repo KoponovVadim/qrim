@@ -3,16 +3,23 @@ from contextlib import asynccontextmanager
 from aiogram.types import Update
 from app.bot.router import bot, dp, shutdown
 from app.config import settings
+import logging
+import sys
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Устанавливаем webhook при старте
     try:
-        await bot.set_webhook(settings.WEBHOOK_URL, drop_pending_updates=True)
-        print(f"✅ Webhook установлен: {settings.WEBHOOK_URL}")
+        result = await bot.set_webhook(settings.WEBHOOK_URL, drop_pending_updates=True)
+        logger.info(f"✅ Webhook установлен: {settings.WEBHOOK_URL}, result: {result}")
+        print(f"✅ Webhook установлен: {settings.WEBHOOK_URL}", flush=True)
     except Exception as e:
-        print(f"⚠️ Ошибка установки webhook: {e}")
+        logger.error(f"⚠️ Ошибка установки webhook: {e}")
+        print(f"⚠️ Ошибка установки webhook: {e}", flush=True)
     
     yield
     await shutdown()
