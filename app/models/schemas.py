@@ -76,4 +76,5 @@ class Price(BaseModel):
     description: str
     price: str
     unit: str
+    min_qty: Optional[str] = None
     active: bool
