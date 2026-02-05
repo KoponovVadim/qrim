@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     
     # Together AI
     TOGETHER_API_KEY: str
-    TOGETHER_MODEL: str = "Servicenow/Apriel-1-6-15B-Thinker"
+    TOGETHER_MODEL: str = "ServiceNow-AI/Apriel-1.6-15b-Thinker"
     
     # Google Sheets
     GOOGLE_SHEETS_ID: str
