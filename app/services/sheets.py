@@ -4,7 +4,7 @@ from typing import List, Optional, Dict
 from datetime import datetime
 import json
 from app.config import settings
-from app.models.schemas import VenueInfo, Event, Price, Table, Booking, MenuItem, Order
+from app.models.schemas import VenueInfo, Event, Promo, Price, Table, Booking, MenuItem, Order
 
 
 class SheetsClient:
@@ -228,6 +228,34 @@ class SheetsClient:
                     ))
         
         return events[:limit]
+    
+    def get_promos(self, limit: int = 5) -> List[Promo]:
+        """Возвращает активные акции"""
+        rows = self._read_range('promo!A2:J')
+        promos = []
+        today = datetime.now().strftime('%Y-%m-%d')
+        
+        for row in rows:
+            if len(row) >= 10:
+                active = row[9].upper() == 'TRUE'
+                date_to = row[4]
+                
+                # Показываем только активные и не завершившиеся
+                if active and date_to >= today:
+                    promos.append(Promo(
+                        promo_id=row[0],
+                        title=row[1],
+                        description=row[2],
+                        date_from=row[3],
+                        date_to=row[4],
+                        time_from=row[5],
+                        time_to=row[6],
+                        image_url=row[7] if len(row) > 7 and row[7] else None,
+                        booking_cta=row[8].upper() == 'TRUE',
+                        active=active
+                    ))
+        
+        return promos[:limit]
     
     def get_prices(self, category: Optional[str] = None) -> List[Price]:
         """Возвращает активные цены, опционально по категории"""

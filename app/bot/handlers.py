@@ -19,6 +19,10 @@ async def cmd_start(message: Message):
         [
             InlineKeyboardButton(text="📅 Забронировать", callback_data="action_book"),
             InlineKeyboardButton(text="📋 Меню", callback_data="action_menu")
+        ],
+        [
+            InlineKeyboardButton(text="🎁 Акции", callback_data="action_promo"),
+            InlineKeyboardButton(text="🎉 Мероприятия", callback_data="action_events")
         ]
     ])
     
@@ -27,7 +31,9 @@ async def cmd_start(message: Message):
         "Могу:\n"
         "📍 Рассказать о заведении\n"
         "📅 Забронировать стол\n"
-        "🎉 Показать афишу\n"
+        "🎁 Показать актуальные акции\n"
+        "🎉 Показать афишу мероприятий\n"
+        "📋 Предложить меню\n"
         "💰 Сообщить цены\n\n"
         "Просто напиши, что тебя интересует!",
         reply_markup=keyboard
@@ -62,6 +68,20 @@ async def callback_menu(callback):
     await callback.answer()
 
 
+@router.callback_query(F.data == "action_promo")
+async def callback_promo(callback):
+    context = redis_client.get_context(callback.from_user.id)
+    await handle_promos(callback.message, "покажи акции", context)
+    await callback.answer()
+
+
+@router.callback_query(F.data == "action_events")
+async def callback_events(callback):
+    context = redis_client.get_context(callback.from_user.id)
+    await handle_events(callback.message, "покажи мероприятия", context)
+    await callback.answer()
+
+
 @router.message(F.text)
 async def handle_message(message: Message):
     user_id = message.from_user.id
@@ -82,6 +102,9 @@ async def handle_message(message: Message):
     
     elif ai_response.intent == "events":
         await handle_events(message, user_text, context)
+    
+    elif ai_response.intent == "promo":
+        await handle_promos(message, user_text, context)
     
     elif ai_response.intent == "prices":
         await handle_prices(message, user_text, context)
@@ -137,6 +160,24 @@ async def handle_events(message: Message, user_text: str, context: list):
         for event in events:
             events_list.append(f"{event.title} ({event.date_from} {event.time_from}-{event.time_to}): {event.description}")
         data_context = {"events": "; ".join(events_list)}
+    
+    # AI формирует ответ
+    ai_response = ai_service.process_message(user_text, context, data_context)
+    
+    redis_client.add_to_context(message.from_user.id, {"role": "assistant", "content": ai_response.response_text})
+    await message.answer(ai_response.response_text)
+
+
+async def handle_promos(message: Message, user_text: str, context: list):
+    promos = sheets_client.get_promos(limit=5)
+    
+    if not promos:
+        data_context = {"promos": "Нет активных акций"}
+    else:
+        promos_list = []
+        for promo in promos:
+            promos_list.append(f"{promo.title} ({promo.date_from} - {promo.date_to}): {promo.description}")
+        data_context = {"promos": "; ".join(promos_list)}
     
     # AI формирует ответ
     ai_response = ai_service.process_message(user_text, context, data_context)

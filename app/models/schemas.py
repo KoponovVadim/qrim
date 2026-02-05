@@ -69,6 +69,19 @@ class Event(BaseModel):
     active: bool
 
 
+class Promo(BaseModel):
+    promo_id: str
+    title: str
+    description: str
+    date_from: str
+    date_to: str
+    time_from: str
+    time_to: str
+    image_url: Optional[str] = None
+    booking_cta: bool
+    active: bool
+
+
 class Price(BaseModel):
     price_id: str
     category: str
