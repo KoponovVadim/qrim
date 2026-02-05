@@ -7,7 +7,13 @@ from app.config import settings
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Webhook устанавливается вручную через /set-webhook endpoint
+    # Устанавливаем webhook при старте
+    try:
+        await bot.set_webhook(settings.WEBHOOK_URL, drop_pending_updates=True)
+        print(f"✅ Webhook установлен: {settings.WEBHOOK_URL}")
+    except Exception as e:
+        print(f"⚠️ Ошибка установки webhook: {e}")
+    
     yield
     await shutdown()
 
