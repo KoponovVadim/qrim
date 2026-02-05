@@ -167,7 +167,22 @@ class SheetsClient:
     
     def create_booking(self, booking_data: dict) -> str:
         """Создаёт новую бронь и возвращает booking_id"""
-        booking_id = f"B{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        # Получаем последний ID из таблицы
+        rows = self._read_range('bookings!A2:A')
+        last_num = 0
+        
+        for row in rows:
+            if row and row[0].startswith('B'):
+                try:
+                    # Извлекаем число из ID (B0001 -> 1, B0123 -> 123)
+                    num = int(row[0][1:])
+                    if num > last_num:
+                        last_num = num
+                except ValueError:
+                    continue
+        
+        # Генерируем новый ID
+        booking_id = f"B{last_num + 1:04d}"  # B0001, B0002, etc.
         created_at = datetime.now().strftime('%Y-%m-%d %H:%M')
         
         row = [[
