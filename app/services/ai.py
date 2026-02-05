@@ -55,14 +55,25 @@ class AIService:
             )
             
             response_text = response.choices[0].message.content
+            print(f"AI Response: {response_text}", flush=True)
             
-            # Парсим JSON из ответа
+            # Парсим JSON из ответа - ищем JSON блок в тексте
             try:
+                # Пробуем напрямую
                 data = json.loads(response_text)
                 return AIIntent(**data)
-            except Exception:
-                pass
+            except:
+                # Ищем JSON между фигурными скобками
+                import re
+                json_match = re.search(r'\{[^{}]*"intent"[^{}]*\}', response_text, re.DOTALL)
+                if json_match:
+                    try:
+                        data = json.loads(json_match.group())
+                        return AIIntent(**data)
+                    except:
+                        pass
             
+            print(f"Failed to parse AI response as JSON", flush=True)
             return AIIntent(
                 intent="other",
                 slots={},
@@ -70,7 +81,7 @@ class AIService:
             )
         
         except Exception as e:
-            print(f"AI Error: {e}")
+            print(f"AI Error: {e}", flush=True)
             return AIIntent(
                 intent="other",
                 slots={},
