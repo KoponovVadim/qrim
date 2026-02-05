@@ -258,22 +258,37 @@ class SheetsClient:
     
     def get_menu(self, category: Optional[str] = None) -> List[MenuItem]:
         """Возвращает меню, опционально по категории"""
-        rows = self._read_range('menu!A2:F')
+        try:
+            rows = self._read_range('menu!A2:F')
+        except Exception as e:
+            print(f"ERROR reading menu: {e}", flush=True)
+            return []
+        
         menu_items = []
         for row in rows:
-            if len(row) >= 6:
-                active = row[5].upper() == 'TRUE'
-                item_category = row[0]
-                
-                if active and (category is None or item_category == category):
-                    menu_items.append(MenuItem(
-                        category=item_category,
-                        name=row[1],
-                        description=row[2] if row[2] else None,
-                        price=int(row[3]),
-                        unit=row[4],
-                        active=active
-                    ))
+            if len(row) >= 4:  # Минимум: category, name, price, unit
+                try:
+                    # Active по умолчанию TRUE, если колонка отсутствует или пустая
+                    active = True
+                    if len(row) >= 6 and row[5]:
+                        active = row[5].upper() == 'TRUE'
+                    
+                    item_category = row[0]
+                    
+                    if active and (category is None or item_category == category):
+                        menu_items.append(MenuItem(
+                            category=item_category,
+                            name=row[1],
+                            description=row[2] if len(row) > 2 and row[2] else None,
+                            price=int(row[3]) if row[3] else 0,
+                            unit=row[4] if len(row) > 4 else 'шт',
+                            active=active
+                        ))
+                except Exception as e:
+                    print(f"ERROR parsing menu row {row}: {e}", flush=True)
+                    continue
+        
+        print(f"DEBUG: get_menu returned {len(menu_items)} items", flush=True)
         return menu_items
     
     def create_order(self, booking_id: str, item_name: str, quantity: int, price: int) -> str:
