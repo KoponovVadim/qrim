@@ -106,7 +106,13 @@ async def handle_events(message: Message):
 
 
 async def handle_prices(message: Message):
-    prices = sheets_client.get_prices()
+    try:
+        prices = sheets_client.get_prices()
+        print(f"DEBUG: got {len(prices) if prices else 0} prices", flush=True)
+    except Exception as e:
+        print(f"ERROR getting prices: {e}", flush=True)
+        await message.answer("Уточню прайс у администратора!")
+        return
     
     if not prices:
         await message.answer("Уточню прайс у администратора!")
