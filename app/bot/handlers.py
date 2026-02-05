@@ -58,6 +58,12 @@ async def handle_message(message: Message):
     elif ai_response.intent == "book":
         await handle_booking(message, ai_response)
     
+    elif ai_response.intent == "cancel":
+        await handle_cancel(message, ai_response)
+    
+    elif ai_response.intent == "modify":
+        await handle_modify(message, ai_response)
+    
     else:
         await message.answer(ai_response.response_text)
 
@@ -139,6 +145,7 @@ async def handle_prices(message: Message):
                     text += f" ({price.description})"
                 text += "\n"
     
+    # Убираем дублирование - отправляем только прайс
     await message.answer(text)
 
 
@@ -168,6 +175,15 @@ async def handle_booking(message: Message, ai_response):
         }
         
         await message.answer(prompts.get(missing[0], f"Укажите {missing[0]}"))
+        return
+    
+    # Проверяем дубликаты - уже есть бронь на эту дату?
+    if sheets_client.check_duplicate_booking(state['phone'], state['date']):
+        await message.answer(
+            f"У вас уже есть подтверждённая бронь на {state['date']} 📅\n"
+            "Если нужно изменить — позвоните нам или напишите /reset для новой брони."
+        )
+        redis_client.delete_state(user_id)
         return
     
     # Все данные есть — проверяем доступность
@@ -210,3 +226,88 @@ async def handle_booking(message: Message, ai_response):
         await message.answer("Произошла ошибка при бронировании. Позвоните нам напрямую!")
     
     redis_client.delete_state(user_id)
+
+
+async def handle_cancel(message: Message, ai_response):
+    user_id = message.from_user.id
+    slots = ai_response.slots
+    
+    # Нужен телефон для поиска брони
+    if not slots.get('phone'):
+        await message.answer("Укажите номер телефона, на который оформлена бронь")
+        return
+    
+    # Ищем брони по телефону
+    bookings = sheets_client.find_booking_by_phone(slots['phone'])
+    
+    if not bookings:
+        await message.answer("Активных броней на этот номер не найдено 🤷")
+        return
+    
+    # Если одна бронь - отменяем сразу
+    if len(bookings) == 1:
+        booking = bookings[0]
+        if sheets_client.cancel_booking(booking.booking_id):
+            await message.answer(
+                f"✅ Бронь отменена:\n\n"
+                f"📋 {booking.booking_id}\n"
+                f"📅 {booking.date} в {booking.time}\n"
+                f"👥 Гостей: {booking.guests}\n\n"
+                "Будем рады видеть вас в другой раз!"
+            )
+        else:
+            await message.answer("Ошибка отмены брони. Позвоните нам напрямую.")
+        return
+    
+    # Если несколько броней - показываем список
+    text = "У вас несколько активных броней:\n\n"
+    for b in bookings:
+        text += f"📋 {b.booking_id}\n📅 {b.date} в {b.time}, {b.guests} чел.\n\n"
+    text += "Укажите номер брони (например, B001) для отмены"
+    await message.answer(text)
+
+
+async def handle_modify(message: Message, ai_response):
+    user_id = message.from_user.id
+    slots = ai_response.slots
+    
+    # Нужен телефон для поиска брони
+    if not slots.get('phone'):
+        await message.answer("Укажите номер телефона, на который оформлена бронь")
+        return
+    
+    # Ищем брони по телефону
+    bookings = sheets_client.find_booking_by_phone(slots['phone'])
+    
+    if not bookings:
+        await message.answer("Активных броней на этот номер не найдено 🤷")
+        return
+    
+    # Если одна бронь и есть что менять
+    if len(bookings) == 1 and (slots.get('guests') or slots.get('time')):
+        booking = bookings[0]
+        updates = {}
+        if slots.get('guests'):
+            updates['guests'] = slots['guests']
+        if slots.get('time'):
+            updates['time'] = slots['time']
+        
+        if sheets_client.update_booking(booking.booking_id, updates):
+            text = f"✅ Бронь обновлена:\n\n📋 {booking.booking_id}\n📅 {booking.date}"
+            if 'time' in updates:
+                text += f" в {updates['time']}"
+            else:
+                text += f" в {booking.time}"
+            if 'guests' in updates:
+                text += f"\n👥 Гостей: {updates['guests']}"
+            await message.answer(text)
+        else:
+            await message.answer("Ошибка обновления брони. Позвоните нам напрямую.")
+        return
+    
+    # Если несколько броней - показываем список
+    text = "У вас несколько активных броней:\n\n"
+    for b in bookings:
+        text += f"📋 {b.booking_id}\n📅 {b.date} в {b.time}, {b.guests} чел.\n\n"
+    text += "Укажите номер брони и что хотите изменить"
+    await message.answer(text)

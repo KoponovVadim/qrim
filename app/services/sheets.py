@@ -68,12 +68,43 @@ class SheetsClient:
                     ))
         return tables
     
-    def get_bookings(self, date: str) -> List[Booking]:
-        """Возвращает брони на конкретную дату"""
+    def get_bookings(self, date: str = None) -> List[Booking]:
+        """Возвращает брони на конкретную дату или все активные"""
         rows = self._read_range('bookings!A2:J')
         bookings = []
         for row in rows:
-            if len(row) >= 10 and row[1] == date:
+            if len(row) >= 10:
+                if date is None or row[1] == date:
+                    bookings.append(Booking(
+                        booking_id=row[0],
+                        date=row[1],
+                        time=row[2],
+                        guests=int(row[3]),
+                        table_id=row[4],
+                        name=row[5],
+                        phone=row[6],
+                        source=row[7],
+                        status=row[8],
+                        created_at=row[9]
+                    ))
+        return bookings
+    
+    def check_duplicate_booking(self, phone: str, date: str) -> bool:
+        """Проверяет есть ли активная бронь у клиента на эту дату"""
+        rows = self._read_range('bookings!A2:J')
+        for row in rows:
+            if len(row) >= 10:
+                # Проверяем телефон, дату и статус confirmed
+                if row[6] == phone and row[1] == date and row[8] == 'confirmed':
+                    return True
+        return False
+    
+    def find_booking_by_phone(self, phone: str) -> List[Booking]:
+        """Находит все активные брони по телефону"""
+        rows = self._read_range('bookings!A2:J')
+        bookings = []
+        for row in rows:
+            if len(row) >= 10 and row[6] == phone and row[8] == 'confirmed':
                 bookings.append(Booking(
                     booking_id=row[0],
                     date=row[1],
@@ -87,6 +118,52 @@ class SheetsClient:
                     created_at=row[9]
                 ))
         return bookings
+    
+    def cancel_booking(self, booking_id: str) -> bool:
+        """Отменяет бронь (меняет статус на cancelled)"""
+        try:
+            rows = self._read_range('bookings!A2:J')
+            for idx, row in enumerate(rows, start=2):
+                if len(row) >= 10 and row[0] == booking_id:
+                    # Обновляем статус
+                    self.service.spreadsheets().values().update(
+                        spreadsheetId=settings.GOOGLE_SHEETS_ID,
+                        range=f'bookings!I{idx}',
+                        valueInputOption='RAW',
+                        body={'values': [['cancelled']]}
+                    ).execute()
+                    return True
+            return False
+        except Exception as e:
+            print(f"Error cancelling booking: {e}", flush=True)
+            return False
+    
+    def update_booking(self, booking_id: str, updates: dict) -> bool:
+        """Обновляет бронь (гостей или время)"""
+        try:
+            rows = self._read_range('bookings!A2:J')
+            for idx, row in enumerate(rows, start=2):
+                if len(row) >= 10 and row[0] == booking_id:
+                    # Обновляем нужные поля
+                    if 'guests' in updates:
+                        self.service.spreadsheets().values().update(
+                            spreadsheetId=settings.GOOGLE_SHEETS_ID,
+                            range=f'bookings!D{idx}',
+                            valueInputOption='RAW',
+                            body={'values': [[updates['guests']]]}
+                        ).execute()
+                    if 'time' in updates:
+                        self.service.spreadsheets().values().update(
+                            spreadsheetId=settings.GOOGLE_SHEETS_ID,
+                            range=f'bookings!C{idx}',
+                            valueInputOption='RAW',
+                            body={'values': [[updates['time']]]}
+                        ).execute()
+                    return True
+            return False
+        except Exception as e:
+            print(f"Error updating booking: {e}", flush=True)
+            return False
     
     def create_booking(self, booking_data: dict) -> str:
         """Создаёт новую бронь и возвращает booking_id"""
