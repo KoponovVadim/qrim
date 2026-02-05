@@ -1,4 +1,4 @@
-from openai import OpenAI
+import replicate
 import json
 from typing import Optional
 from app.config import settings
@@ -33,31 +33,28 @@ SYSTEM_PROMPT = """Ты — менеджер кальянной QRIM Lounge. Т�
 
 class AIService:
     def __init__(self):
-        self.client = OpenAI(
-            api_key=settings.OPENROUTER_API_KEY,
-            base_url="https://openrouter.ai/api/v1"
-        )
+        self.client = replicate.Client(api_token=settings.REPLICATE_API_TOKEN)
     
     def process_message(self, user_message: str, context: list = None) -> AIIntent:
-        messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-        
-        if context:
-            messages.extend(context[-6:])
-        
-        messages.append({"role": "user", "content": user_message})
+        # Формируем промпт с контекстом
+        prompt = f"{SYSTEM_PROMPT}\n\nПользователь: {user_message}\n\nОтветь в JSON формате:"
         
         try:
-            response = self.client.chat.completions.create(
-                model=settings.OPENROUTER_MODEL,
-                messages=messages,
-                temperature=0.7,
-                max_tokens=500
+            output = self.client.run(
+                "openai/gpt-4.1-mini",
+                input={
+                    "prompt": prompt,
+                    "system_prompt": SYSTEM_PROMPT,
+                    "max_tokens": 500,
+                    "temperature": 0.7
+                }
             )
             
-            response_text = response.choices[0].message.content
+            # Собираем стрим в одну строку
+            response_text = "".join(output)
             print(f"AI Response: {response_text}", flush=True)
             
-            # Парсим JSON из ответа - ищем JSON блок в тексте
+            # Парсим JSON из ответа
             try:
                 # Пробуем напрямую
                 data = json.loads(response_text)

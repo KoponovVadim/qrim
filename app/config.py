@@ -10,9 +10,8 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://redis:6379/0"
     REDIS_TTL: int = 3600
     
-    # OpenRouter AI
-    OPENROUTER_API_KEY: str
-    OPENROUTER_MODEL: str = "upstage/solar-pro-3:free"
+    # Replicate AI (GPT-4.1 mini)
+    REPLICATE_API_TOKEN: str
     
     # Google Sheets
     GOOGLE_SHEETS_ID: str
