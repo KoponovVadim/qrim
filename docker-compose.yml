@@ -1,0 +1,32 @@
+version: "3.8"
+
+services:
+  ai-manager:
+    build: .
+    container_name: ai_manager_app
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "8001:8000"
+    depends_on:
+      - redis
+    networks:
+      - ai_manager_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: ai_manager_redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    networks:
+      - ai_manager_network
+
+volumes:
+  redis_data:
+    driver: local
+
+networks:
+  ai_manager_network:
+    driver: bridge
