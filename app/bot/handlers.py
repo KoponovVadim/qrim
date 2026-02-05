@@ -157,22 +157,16 @@ async def handle_prices(message: Message, user_text: str, context: list):
         await message.answer("Уточню прайс у администратора!")
         return
     
-    # Формируем данные для AI
-    prices_by_category = {}
+    # Формируем данные для AI (только столы)
+    prices_list = []
     for price in prices:
-        if price.category not in prices_by_category:
-            prices_by_category[price.category] = []
         price_str = f"{price.name} - {price.price} руб"
         if price.description:
             price_str += f" ({price.description})"
-        prices_by_category[price.category].append(price_str)
+        prices_list.append(price_str)
     
     data_context = {
-        "prices_hookah": ", ".join(prices_by_category.get('hookah', [])),
-        "prices_table": ", ".join(prices_by_category.get('table', [])),
-        "prices_drinks": ", ".join(prices_by_category.get('drinks', [])),
-        "prices_balloons": ", ".join(prices_by_category.get('balloons', [])),
-        "prices_extra": ", ".join(prices_by_category.get('extra', []))
+        "prices_tables": ", ".join(prices_list)
     }
     
     # AI формирует ответ
