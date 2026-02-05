@@ -106,6 +106,12 @@ async def handle_events(message: Message):
 
 
 async def handle_prices(message: Message):
+    prices = sheets_client.get_prices()
+    
+    if not prices:
+        await message.answer("Уточню прайс у администратора!")
+        return
+    
     # Группируем по категориям
     categories = {
         'hookah': '🔥 Кальяны',
@@ -124,13 +130,7 @@ async def handle_prices(message: Message):
                 text += f"  • {price.name}: {price.price}"
                 if price.description:
                     text += f" ({price.description})"
-                text += "
-    
-    for price in prices:
-        if price.category != current_category:
-            text += f"\n🔹 {price.category}\n"
-            current_category = price.category
-        text += f"  • {price.item}: {price.price}\n"
+                text += "\n"
     
     await message.answer(text)
 
@@ -174,6 +174,17 @@ async def handle_booking(message: Message, ai_response):
             "Попробуйте другое время или дату."
         )
         redis_client.delete_state(user_id)
+        return
+    
+    # Создаём бронь
+    booking_request = BookingRequest(
+        date=state['date'],
+        time=state['time'],
+        guests=int(state['guests']),
+        name=state['name'],
+        phone=state['phone']
+    )
+    
     booking_id = booking_service.create_booking(booking_request, availability.table_id)
     
     if booking_id:
@@ -182,18 +193,7 @@ async def handle_booking(message: Message, ai_response):
             f"📋 Номер брони: {booking_id}\n"
             f"📅 {state['date']} в {state['time']}\n"
             f"👥 Гостей: {state['guests']}\n"
-            f"👤 {state['name
-        name=state['name'],
-        phone=state['phone']
-    )
-    
-    success = booking_service.create_booking(booking_request, availability.table_id)
-    
-    if success:
-        await message.answer(
-            f"✅ Отлично! Столик забронирован:\n\n"
-            f"📅 {state['date']} в {state['time']}\n"
-            f"👥 Гостей: {state['guests']}\n"
+            f"👤 {state['name']}\n"
             f"📱 {state['phone']}\n\n"
             "Ждём вас! Если планы изменятся — напишите нам."
         )
