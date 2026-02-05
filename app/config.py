@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     
     # Together AI
     TOGETHER_API_KEY: str
-    TOGETHER_MODEL: str = "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo"
+    TOGETHER_MODEL: str = "Servicenow/Apriel-1-6-15B-Thinker"
     
     # Google Sheets
     GOOGLE_SHEETS_ID: str
