@@ -1,4 +1,4 @@
-from groq import Groq
+from together import Together
 import json
 from typing import Optional
 from app.config import settings
@@ -33,7 +33,7 @@ SYSTEM_PROMPT = """Ты — менеджер кальянной QRIM Lounge. Т�
 
 class AIService:
     def __init__(self):
-        self.client = Groq(api_key=settings.GROQ_API_KEY)
+        self.client = Together(api_key=settings.TOGETHER_API_KEY)
     
     def process_message(self, user_message: str, context: list = None) -> AIIntent:
         messages = [{"role": "system", "content": SYSTEM_PROMPT}]
@@ -45,11 +45,10 @@ class AIService:
         
         try:
             response = self.client.chat.completions.create(
-                model=settings.GROQ_MODEL,
+                model=settings.TOGETHER_MODEL,
                 messages=messages,
                 temperature=0.7,
-                max_tokens=500,
-                response_format={"type": "json_object"}
+                max_tokens=500
             )
             
             response_text = response.choices[0].message.content
