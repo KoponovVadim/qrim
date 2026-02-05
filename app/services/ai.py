@@ -37,7 +37,13 @@ class AIService:
     
     def process_message(self, user_message: str, context: list = None) -> AIIntent:
         # Формируем промпт с контекстом
-        prompt = f"{SYSTEM_PROMPT}\n\nПользователь: {user_message}\n\nОтветь в JSON формате:"
+        context_str = ""
+        if context:
+            for msg in context[-6:]:  # Последние 3 пары сообщений
+                role = "Пользователь" if msg["role"] == "user" else "Ассистент"
+                context_str += f"{role}: {msg['content']}\n"
+        
+        prompt = f"{SYSTEM_PROMPT}\n\n{context_str}Пользователь: {user_message}\n\nОтветь в JSON формате:"
         
         try:
             output = self.client.run(
