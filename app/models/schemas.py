@@ -78,3 +78,22 @@ class Price(BaseModel):
     unit: str
     min_qty: Optional[str] = None
     active: bool
+
+
+class MenuItem(BaseModel):
+    category: str
+    name: str
+    description: Optional[str] = None
+    price: int
+    unit: str
+    active: bool
+
+
+class Order(BaseModel):
+    order_id: str
+    booking_id: str
+    item_name: str
+    quantity: int
+    price: int
+    created_at: str
+    status: str  # pending, confirmed, completed, cancelled

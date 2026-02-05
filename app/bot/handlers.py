@@ -30,6 +30,14 @@ async def cmd_reset(message: Message):
     await message.answer("Диалог сброшен ✅")
 
 
+@router.message(Command("menu"))
+async def cmd_menu(message: Message):
+    # Перенаправляем на обработчик меню
+    from app.models.schemas import AIIntent
+    ai_response = AIIntent(intent="menu", slots={}, response_text="")
+    await handle_menu(message, ai_response)
+
+
 @router.message(F.text)
 async def handle_message(message: Message):
     user_id = message.from_user.id
@@ -63,6 +71,12 @@ async def handle_message(message: Message):
     
     elif ai_response.intent == "modify":
         await handle_modify(message, ai_response)
+    
+    elif ai_response.intent == "menu":
+        await handle_menu(message, ai_response)
+    
+    elif ai_response.intent == "order":
+        await handle_order(message, ai_response)
     
     else:
         await message.answer(ai_response.response_text)
@@ -311,3 +325,105 @@ async def handle_modify(message: Message, ai_response):
         text += f"📋 {b.booking_id}\n📅 {b.date} в {b.time}, {b.guests} чел.\n\n"
     text += "Укажите номер брони и что хотите изменить"
     await message.answer(text)
+
+
+async def handle_menu(message: Message, ai_response):
+    slots = ai_response.slots
+    category = slots.get('category')
+    
+    menu_items = sheets_client.get_menu(category)
+    
+    if not menu_items:
+        await message.answer("Меню временно недоступно 🤷")
+        return
+    
+    # Группируем по категориям
+    categories = {}
+    for item in menu_items:
+        if item.category not in categories:
+            categories[item.category] = []
+        categories[item.category].append(item)
+    
+    # Названия категорий
+    category_names = {
+        'cocktails': '🍸 Коктейли',
+        'soft_drinks': '🥤 Безалкогольные',
+        'hookah': '💨 Кальяны',
+        'shots': '🥃 Шоты',
+        'beer': '🍺 Пиво',
+        'alcohol': '🍾 Алкоголь',
+        'snacks': '🍿 Закуски'
+    }
+    
+    text = "📋 Наше меню:\n\n"
+    
+    for cat, items in categories.items():
+        cat_name = category_names.get(cat, cat)
+        text += f"{cat_name}:\n"
+        for item in items:
+            text += f"  • {item.name}"
+            if item.description:
+                text += f" - {item.description}"
+            text += f" — {item.price} ₽\n"
+        text += "\n"
+    
+    text += "Для заказа напишите что хотите заказать 🔥"
+    await message.answer(text)
+
+
+async def handle_order(message: Message, ai_response):
+    slots = ai_response.slots
+    
+    # Нужен телефон для поиска брони
+    if not slots.get('phone'):
+        await message.answer("Укажите номер телефона, на который оформлена бронь")
+        return
+    
+    # Ищем активные брони
+    bookings = sheets_client.find_booking_by_phone(slots['phone'])
+    
+    if not bookings:
+        await message.answer("Сначала забронируйте столик! 😊")
+        return
+    
+    # Если несколько броней - берём первую активную
+    booking = bookings[0]
+    
+    # Обрабатываем заказ (пока просто список items)
+    items = slots.get('items', [])
+    
+    if not items:
+        await message.answer("Что именно хотите заказать? Могу показать меню!")
+        return
+    
+    # Создаём заказы
+    total = 0
+    created_orders = []
+    
+    # Получаем меню для проверки цен
+    menu = sheets_client.get_menu()
+    menu_dict = {item.name.lower(): item for item in menu}
+    
+    for item in items:
+        item_name = item.get('name', '')
+        quantity = item.get('quantity', 1)
+        
+        # Ищем в меню
+        menu_item = menu_dict.get(item_name.lower())
+        if menu_item:
+            order_id = sheets_client.create_order(
+                booking.booking_id,
+                menu_item.name,
+                quantity,
+                menu_item.price * quantity
+            )
+            total += menu_item.price * quantity
+            created_orders.append(f"{menu_item.name} x{quantity} — {menu_item.price * quantity} ₽")
+    
+    if created_orders:
+        text = f"✅ Заказ оформлен к брони {booking.booking_id}:\n\n"
+        text += "\n".join(created_orders)
+        text += f"\n\n💰 Итого: {total} ₽\n\nПриготовим к вашему приходу!"
+        await message.answer(text)
+    else:
+        await message.answer("Не удалось найти указанные позиции в меню. Проверьте название или посмотрите меню: /menu")

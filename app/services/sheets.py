@@ -4,7 +4,7 @@ from typing import List, Optional, Dict
 from datetime import datetime
 import json
 from app.config import settings
-from app.models.schemas import VenueInfo, Event, Price, Table, Booking
+from app.models.schemas import VenueInfo, Event, Price, Table, Booking, MenuItem, Order
 
 
 class SheetsClient:
@@ -255,6 +255,74 @@ class SheetsClient:
         
         print(f"DEBUG: returning {len(prices)} prices", flush=True)
         return prices
+    
+    def get_menu(self, category: Optional[str] = None) -> List[MenuItem]:
+        """Возвращает меню, опционально по категории"""
+        rows = self._read_range('menu!A2:F')
+        menu_items = []
+        for row in rows:
+            if len(row) >= 6:
+                active = row[5].upper() == 'TRUE'
+                item_category = row[0]
+                
+                if active and (category is None or item_category == category):
+                    menu_items.append(MenuItem(
+                        category=item_category,
+                        name=row[1],
+                        description=row[2] if row[2] else None,
+                        price=int(row[3]),
+                        unit=row[4],
+                        active=active
+                    ))
+        return menu_items
+    
+    def create_order(self, booking_id: str, item_name: str, quantity: int, price: int) -> str:
+        """Создаёт заказ к брони"""
+        # Получаем последний order ID
+        rows = self._read_range('orders!A2:A')
+        last_num = 0
+        
+        for row in rows:
+            if row and row[0].startswith('O'):
+                try:
+                    num = int(row[0][1:])
+                    if num > last_num:
+                        last_num = num
+                except ValueError:
+                    continue
+        
+        order_id = f"O{last_num + 1:04d}"
+        created_at = datetime.now().strftime('%Y-%m-%d %H:%M')
+        
+        row = [[
+            order_id,
+            booking_id,
+            item_name,
+            quantity,
+            price,
+            created_at,
+            'pending'
+        ]]
+        
+        self._append_range('orders!A:G', row)
+        return order_id
+    
+    def get_orders_by_booking(self, booking_id: str) -> List[Order]:
+        """Возвращает заказы по ID брони"""
+        rows = self._read_range('orders!A2:G')
+        orders = []
+        for row in rows:
+            if len(row) >= 7 and row[1] == booking_id:
+                orders.append(Order(
+                    order_id=row[0],
+                    booking_id=row[1],
+                    item_name=row[2],
+                    quantity=int(row[3]),
+                    price=int(row[4]),
+                    created_at=row[5],
+                    status=row[6]
+                ))
+        return orders
 
 
 sheets_client = SheetsClient()
