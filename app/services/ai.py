@@ -1,4 +1,4 @@
-from together import Together
+from openai import OpenAI
 import json
 from typing import Optional
 from app.config import settings
@@ -33,7 +33,10 @@ SYSTEM_PROMPT = """Ты — менеджер кальянной QRIM Lounge. Т�
 
 class AIService:
     def __init__(self):
-        self.client = Together(api_key=settings.TOGETHER_API_KEY)
+        self.client = OpenAI(
+            api_key=settings.OPENROUTER_API_KEY,
+            base_url="https://openrouter.ai/api/v1"
+        )
     
     def process_message(self, user_message: str, context: list = None) -> AIIntent:
         messages = [{"role": "system", "content": SYSTEM_PROMPT}]
@@ -45,7 +48,7 @@ class AIService:
         
         try:
             response = self.client.chat.completions.create(
-                model=settings.TOGETHER_MODEL,
+                model=settings.OPENROUTER_MODEL,
                 messages=messages,
                 temperature=0.7,
                 max_tokens=500

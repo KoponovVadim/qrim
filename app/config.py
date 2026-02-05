@@ -10,9 +10,9 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://redis:6379/0"
     REDIS_TTL: int = 3600
     
-    # Together AI
-    TOGETHER_API_KEY: str
-    TOGETHER_MODEL: str = "ServiceNow-AI/Apriel-1.6-15b-Thinker"
+    # OpenRouter AI
+    OPENROUTER_API_KEY: str
+    OPENROUTER_MODEL: str = "upstage/solar-pro-3:free"
     
     # Google Sheets
     GOOGLE_SHEETS_ID: str
