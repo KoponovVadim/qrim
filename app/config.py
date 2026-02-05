@@ -10,9 +10,9 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://redis:6379/0"
     REDIS_TTL: int = 3600
     
-    # AI
-    REPLICATE_API_KEY: str
-    AI_MODEL: str = "meta/meta-llama-3-70b-instruct"
+    # Groq AI
+    GROQ_API_KEY: str
+    GROQ_MODEL: str = "llama-3.1-70b-versatile"
     
     # Google Sheets
     GOOGLE_SHEETS_ID: str

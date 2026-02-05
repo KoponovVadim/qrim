@@ -1,4 +1,4 @@
-import replicate
+from groq import Groq
 import json
 from typing import Optional
 from app.config import settings
@@ -33,7 +33,7 @@ SYSTEM_PROMPT = """Ты — менеджер кальянной QRIM Lounge. Т�
 
 class AIService:
     def __init__(self):
-        self.client = replicate.Client(api_token=settings.REPLICATE_API_KEY)
+        self.client = Groq(api_key=settings.GROQ_API_KEY)
     
     def process_message(self, user_message: str, context: list = None) -> AIIntent:
         messages = [{"role": "system", "content": SYSTEM_PROMPT}]
@@ -44,25 +44,20 @@ class AIService:
         messages.append({"role": "user", "content": user_message})
         
         try:
-            output = self.client.run(
-                settings.AI_MODEL,
-                input={
-                    "prompt": json.dumps(messages),
-                    "max_tokens": 500,
-                    "temperature": 0.7
-                }
+            response = self.client.chat.completions.create(
+                model=settings.GROQ_MODEL,
+                messages=messages,
+                temperature=0.7,
+                max_tokens=500,
+                response_format={"type": "json_object"}
             )
             
-            response_text = "".join(output)
+            response_text = response.choices[0].message.content
             
             # Парсим JSON из ответа
             try:
-                json_start = response_text.find('{')
-                json_end = response_text.rfind('}') + 1
-                if json_start >= 0 and json_end > json_start:
-                    json_str = response_text[json_start:json_end]
-                    data = json.loads(json_str)
-                    return AIIntent(**data)
+                data = json.loads(response_text)
+                return AIIntent(**data)
             except Exception:
                 pass
             
@@ -72,7 +67,8 @@ class AIService:
                 response_text="Извините, не совсем понял ваш вопрос. Могу помочь с бронированием, рассказать о заведении или показать афишу 😊"
             )
         
-        except Exception:
+        except Exception as e:
+            print(f"AI Error: {e}")
             return AIIntent(
                 intent="other",
                 slots={},
