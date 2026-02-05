@@ -146,12 +146,14 @@ async def handle_booking(message: Message, ai_response):
     state = redis_client.get_state(user_id) or {}
     slots = ai_response.slots
     
-    # Обновляем state
-    state.update(slots)
+    # Обновляем state (только непустые значения)
+    for key, value in slots.items():
+        if value is not None:
+            state[key] = value
     
     # Проверяем наличие всех данных
     required = ['date', 'time', 'guests', 'name', 'phone']
-    missing = [f for f in required if f not in state]
+    missing = [f for f in required if f not in state or state[f] is None]
     
     if missing:
         redis_client.set_state(user_id, state)
