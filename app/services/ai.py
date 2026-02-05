@@ -1,6 +1,7 @@
 import replicate
 import json
 from typing import Optional
+from datetime import datetime
 from app.config import settings
 from app.models.schemas import AIIntent
 
@@ -20,7 +21,7 @@ SYSTEM_PROMPT = """Ты — менеджер кальянной QRIM Lounge. Т�
 - other: любые вопросы НЕ связанные с заведением (офтопик, такси, другие услуги и т.д.)
 
 Если intent=book, извлеки slots:
-- date (формат YYYY-MM-DD)
+- date (формат YYYY-MM-DD, ОБЯЗАТЕЛЬНО используй текущую дату из контекста!)
 - time (формат HH:MM)
 - guests (число)
 - name (имя клиента)
@@ -43,8 +44,11 @@ class AIService:
         self.client = replicate.Client(api_token=settings.REPLICATE_API_TOKEN)
     
     def process_message(self, user_message: str, context: list = None) -> AIIntent:
+        # Получаем текущую дату
+        current_date = datetime.now().strftime('%Y-%m-%d')
+        
         # Формируем промпт с контекстом
-        context_str = ""
+        context_str = f"Текущая дата: {current_date}\n\n"
         if context:
             for msg in context[-6:]:  # Последние 3 пары сообщений
                 role = "Пользователь" if msg["role"] == "user" else "Ассистент"
