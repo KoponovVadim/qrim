@@ -1,0 +1,16 @@
+version: "3.9"
+
+services:
+  soundbot:
+    build: .
+    container_name: soundbot
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "8001:8000"
+    volumes:
+      - sqlite_data:/data
+
+volumes:
+  sqlite_data:

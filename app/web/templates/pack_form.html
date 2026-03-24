@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}{% if mode == 'add' %}Добавить пак{% else %}Редактировать пак{% endif %}{% endblock %}
+
+{% block content %}
+<h2>{% if mode == 'add' %}Добавить пак{% else %}Редактировать пак #{{ pack.id }}{% endif %}</h2>
+
+<form method="post" enctype="multipart/form-data" class="form-grid">
+  <label>Название</label>
+  <input type="text" name="name" value="{{ pack.name if pack else '' }}" required />
+
+  <label>Жанр</label>
+  <input type="text" name="genre" value="{{ pack.genre if pack else '' }}" required />
+
+  <label>Цена USDT</label>
+  <input type="number" step="0.0001" name="price_usdt" value="{{ pack.price_usdt if pack else '0' }}" required />
+
+  <label>Цена TON</label>
+  <input type="number" step="0.0001" name="price_ton" value="{{ pack.price_ton if pack else '0' }}" required />
+
+  <label>Описание</label>
+  <textarea name="description" rows="4">{{ pack.description if pack else '' }}</textarea>
+
+  <label>ZIP-файл пака {% if mode == 'add' %}(обязательно){% else %}(опционально){% endif %}</label>
+  <input type="file" name="zip_file" {% if mode == 'add' %}required{% endif %} />
+
+  <label>Обложка (опционально)</label>
+  <input type="file" name="cover_file" />
+
+  <label>Демо-файлы (можно несколько)</label>
+  <input type="file" name="demo_files" multiple />
+
+  <button type="submit">Сохранить</button>
+</form>
+{% endblock %}

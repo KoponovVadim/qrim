@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Паки{% endblock %}
+
+{% block content %}
+<div class="row-between">
+  <h2>Паки</h2>
+  <a class="button" href="/packs/add">+ Добавить пак</a>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Название</th>
+      <th>Жанр</th>
+      <th>USDT</th>
+      <th>TON</th>
+      <th>Продано</th>
+      <th>Действия</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for p in packs %}
+    <tr>
+      <td>{{ p.id }}</td>
+      <td>{{ p.name }}</td>
+      <td>{{ p.genre }}</td>
+      <td>{{ p.price_usdt }}</td>
+      <td>{{ p.price_ton }}</td>
+      <td>{{ p.sold }}</td>
+      <td>
+        <a class="button small" href="/packs/edit/{{ p.id }}">Редактировать</a>
+        <form action="/packs/delete/{{ p.id }}" method="post" class="inline-form">
+          <button class="button danger small" type="submit">Удалить</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

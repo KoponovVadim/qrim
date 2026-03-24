@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Дашборд{% endblock %}
+
+{% block content %}
+<h2>Дашборд</h2>
+<div class="cards">
+  <div class="card">
+    <h3>Паков</h3>
+    <p>{{ stats.packs_count }}</p>
+  </div>
+  <div class="card">
+    <h3>Заказов</h3>
+    <p>{{ stats.orders_count }}</p>
+  </div>
+  <div class="card">
+    <h3>Ожидают</h3>
+    <p>{{ stats.pending_orders }}</p>
+  </div>
+  <div class="card">
+    <h3>Выручка</h3>
+    <p>{{ stats.revenue_total }}</p>
+  </div>
+</div>
+{% endblock %}

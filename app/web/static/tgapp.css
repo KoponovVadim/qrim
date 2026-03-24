@@ -1,0 +1,122 @@
+:root {
+  --bg: #f5f7fb;
+  --ink: #1f2330;
+  --muted: #667085;
+  --card: #ffffff;
+  --line: #e8eaf0;
+  --grad-a: #ff8a00;
+  --grad-b: #ff3d5a;
+  --grad-c: #6f40ff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.tgapp-body {
+  margin: 0;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 10% -10%, rgba(255, 138, 0, 0.13), transparent 35%),
+    radial-gradient(circle at 100% 0%, rgba(111, 64, 255, 0.12), transparent 40%),
+    var(--bg);
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.bg-shape {
+  position: fixed;
+  border-radius: 999px;
+  filter: blur(40px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.bg-shape-1 {
+  width: 280px;
+  height: 280px;
+  background: rgba(255, 61, 90, 0.2);
+  right: -120px;
+  top: 120px;
+}
+
+.bg-shape-2 {
+  width: 240px;
+  height: 240px;
+  background: rgba(111, 64, 255, 0.2);
+  left: -80px;
+  bottom: 80px;
+}
+
+.container,
+.hero,
+.pack-card {
+  position: relative;
+  z-index: 1;
+}
+
+.hero {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.86)),
+    linear-gradient(120deg, rgba(255, 138, 0, 0.2), rgba(111, 64, 255, 0.2));
+  border-radius: 24px;
+}
+
+.wallet {
+  max-width: 220px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pack-card {
+  border-radius: 18px;
+  transition: transform 0.28s ease, box-shadow 0.28s ease;
+  overflow: hidden;
+}
+
+.pack-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 30px rgba(21, 25, 38, 0.12) !important;
+}
+
+.cover {
+  height: 220px;
+  object-fit: cover;
+  background: #eef1f7;
+}
+
+.cover-placeholder {
+  background: linear-gradient(135deg, #faf3e4, #e9e6fb);
+}
+
+.btn-gradient {
+  background: linear-gradient(135deg, var(--grad-a), var(--grad-b) 45%, var(--grad-c));
+  color: #fff;
+  border: none;
+}
+
+.btn-gradient:hover,
+.btn-gradient:focus {
+  color: #fff;
+  filter: brightness(1.02);
+}
+
+.pack-hero-img {
+  width: 100%;
+  max-height: 320px;
+  object-fit: cover;
+}
+
+.price-box {
+  border: 1px solid var(--line);
+  background: #fcfcff;
+  min-width: 170px;
+}
+
+@media (max-width: 575px) {
+  .cover {
+    height: 180px;
+  }
+}

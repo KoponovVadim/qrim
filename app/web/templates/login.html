@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Вход в панель</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body class="login-page">
+  <div class="login-card">
+    <h2>Вход в Soundbot Admin</h2>
+    {% if error %}
+      <p class="error">{{ error }}</p>
+    {% endif %}
+
+    <form action="/login" method="post" class="form-grid">
+      <label>Пароль</label>
+      <input type="password" name="password" placeholder="WEB_PASSWORD" />
+
+      <label>или Telegram ID</label>
+      <input type="text" name="telegram_id" placeholder="123456789" />
+
+      <button type="submit">Войти</button>
+    </form>
+  </div>
+</body>
+</html>

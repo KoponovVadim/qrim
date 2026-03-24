@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Заказы{% endblock %}
+
+{% block content %}
+<div class="row-between">
+  <h2>Заказы</h2>
+  <form method="get" action="/orders" class="inline-form">
+    <select name="status">
+      <option value="" {% if not status %}selected{% endif %}>Все</option>
+      <option value="pending" {% if status == 'pending' %}selected{% endif %}>pending</option>
+      <option value="completed" {% if status == 'completed' %}selected{% endif %}>completed</option>
+    </select>
+    <button class="button small" type="submit">Фильтр</button>
+  </form>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>User ID</th>
+      <th>Пак</th>
+      <th>Метод</th>
+      <th>Сумма</th>
+      <th>TX Hash</th>
+      <th>Статус</th>
+      <th>Дата</th>
+      <th>Действие</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for o in orders %}
+    <tr>
+      <td>{{ o.id }}</td>
+      <td>{{ o.user_id }}</td>
+      <td>{{ o.pack_name or o.pack_id }}</td>
+      <td>{{ o.payment_method }}</td>
+      <td>{{ o.amount }}</td>
+      <td>{{ o.tx_hash }}</td>
+      <td>{{ o.status }}</td>
+      <td>{{ o.created_at }}</td>
+      <td>
+        {% if o.status == 'pending' %}
+        <form action="/orders/{{ o.id }}/confirm" method="post" class="inline-form">
+          <button class="button small" type="submit">Подтвердить</button>
+        </form>
+        {% else %}
+        -
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
