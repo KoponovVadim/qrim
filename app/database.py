@@ -47,6 +47,7 @@ def init_db() -> None:
             DROP TABLE IF EXISTS orders;
             DROP TABLE IF EXISTS subscriptions;
             DROP TABLE IF EXISTS products;
+            DROP TABLE IF EXISTS purchases;
 
             CREATE TABLE IF NOT EXISTS packs (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
