@@ -1,2 +1,4 @@
 packs/*
 !packs/.gitkeep
+**/__pycache__/
+*.pyc
