@@ -25,12 +25,13 @@
           <div class="d-flex justify-content-between align-items-start gap-2">
             <div>
               <div class="fw-semibold">Purchase #{{ o.id }}</div>
-              <div class="small text-secondary">Pack: {{ o.product_name or o.product_id }}</div>
+              <div class="small text-secondary">Pack: {{ o.pack_name or o.pack_id }}</div>
             </div>
             <span class="badge {% if o.status == 'completed' %}text-bg-success{% elif o.status == 'pending' %}text-bg-warning{% else %}text-bg-secondary{% endif %}">{{ o.status }}</span>
           </div>
           <hr class="my-2" />
           <div class="small">
+            <div>License: <span class="fw-semibold">{{ o.license_type }}</span></div>
             <div>Stars: <span class="fw-semibold">{{ o.stars_amount }}</span></div>
             <div>Charge ID: <span class="text-secondary">{{ o.telegram_payment_charge_id or '-' }}</span></div>
             <div class="text-secondary">{{ o.created_at }}</div>

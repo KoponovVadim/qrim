@@ -1,32 +1,35 @@
 {% extends "base.html" %}
 
-{% block title %}{% if mode == 'add' %}Добавить пак{% else %}Редактировать пак{% endif %}{% endblock %}
+{% block title %}{% if mode == 'add' %}Add pack{% else %}Edit pack{% endif %}{% endblock %}
 
 {% block content %}
-<h2>{% if mode == 'add' %}Добавить пак{% else %}Редактировать пак #{{ pack.id }}{% endif %}</h2>
+<h2>{% if mode == 'add' %}Add pack{% else %}Edit pack #{{ pack.id }}{% endif %}</h2>
 
 <form method="post" enctype="multipart/form-data" class="form-grid">
-  <label>Название</label>
+  <label>Name</label>
   <input type="text" name="name" value="{{ pack.name if pack else '' }}" required />
 
-  <label>Жанр</label>
-  <input type="text" name="genre" value="{{ pack.genre if pack else '' }}" required />
-
-  <label>Цена Stars</label>
-  <input type="number" step="1" min="1" name="price_stars" value="{{ pack.price_stars if pack else '0' }}" required />
-
-  <label>Описание</label>
+  <label>Description</label>
   <textarea name="description" rows="4">{{ pack.description if pack else '' }}</textarea>
 
-  <label>ZIP-файл пака {% if mode == 'add' %}(обязательно){% else %}(опционально){% endif %}</label>
+  <label>Starter price (Stars)</label>
+  <input type="number" step="1" min="1" name="price_starter" value="{{ pack.price_starter if pack else '100' }}" required />
+
+  <label>Producer price (Stars)</label>
+  <input type="number" step="1" min="1" name="price_producer" value="{{ pack.price_producer if pack else '300' }}" required />
+
+  <label>Collector price (Stars)</label>
+  <input type="number" step="1" min="1" name="price_collector" value="{{ pack.price_collector if pack else '600' }}" required />
+
+  <label>Pack ZIP {% if mode == 'add' %}(required){% else %}(optional){% endif %}</label>
   <input type="file" name="zip_file" {% if mode == 'add' %}required{% endif %} />
 
-  <label>Обложка (опционально)</label>
+  <label>Cover image (optional)</label>
   <input type="file" name="cover_file" />
 
-  <label>Демо-файлы (можно несколько)</label>
+  <label>Demo files (multiple)</label>
   <input type="file" name="demo_files" multiple />
 
-  <button type="submit">Сохранить</button>
+  <button type="submit">Save</button>
 </form>
 {% endblock %}

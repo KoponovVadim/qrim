@@ -1,3 +1,4 @@
+import json
 from functools import lru_cache
 
 from pydantic import Field, field_validator
@@ -19,11 +20,12 @@ class Settings(BaseSettings):
 
     WEB_PASSWORD: str = "change_me"
     WEB_PORT: int = 8000
-    WEB_SECRET_KEY: str = "change_me_too"
+    WEB_SECRET_KEY: str = "super_secret_session_key"
 
     DATABASE_PATH: str = "/data/app.db"
     PANEL_BASE_URL: str = "http://localhost:8000"
-    WEB_APP_URL: str = "http://localhost:8000/app"
+    FREE_PACK_KEY: str = "free/free_pack.zip"
+    WEB_APP_URL: str = ""
 
     @field_validator("ADMIN_IDS", mode="before")
     @classmethod
@@ -31,10 +33,16 @@ class Settings(BaseSettings):
         if isinstance(value, list):
             return [int(v) for v in value]
         if isinstance(value, str):
-            value = value.strip()
-            if not value:
+            raw = value.strip()
+            if not raw:
                 return []
-            return [int(chunk.strip()) for chunk in value.split(",") if chunk.strip()]
+            try:
+                parsed = json.loads(raw)
+            except json.JSONDecodeError as exc:
+                raise ValueError("ADMIN_IDS must be a JSON array, e.g. [111,222]") from exc
+            if not isinstance(parsed, list):
+                raise ValueError("ADMIN_IDS must be a JSON array")
+            return [int(v) for v in parsed]
         return []
 
 

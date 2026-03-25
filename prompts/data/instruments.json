@@ -1,0 +1,78 @@
+{
+  "loops": {
+    "drums": [
+      "full drum pattern",
+      "breakbeat",
+      "four-on-the-floor",
+      "syncopated"
+    ],
+    "bass": [
+      "sub bass",
+      "808",
+      "synth bass",
+      "acid bass"
+    ],
+    "melody": [
+      "synth lead",
+      "pluck",
+      "pad",
+      "keys",
+      "vocal chop"
+    ],
+    "fx": [
+      "riser",
+      "impact",
+      "sweep",
+      "texture"
+    ]
+  },
+  "oneshots": {
+    "kicks": [
+      "deep kick",
+      "punchy kick",
+      "808 kick",
+      "acoustic kick"
+    ],
+    "snares": [
+      "clap snare",
+      "rimshot",
+      "crunchy snare",
+      "trap snare"
+    ],
+    "hats": [
+      "closed hi-hat",
+      "open hi-hat",
+      "ride",
+      "shaker"
+    ],
+    "percussion": [
+      "conga",
+      "bongo",
+      "tambourine",
+      "clave"
+    ],
+    "fx": [
+      "downlifter",
+      "uplifter",
+      "glitch",
+      "noise"
+    ]
+  },
+  "midi": {
+    "bass": [
+      "simple bass pattern",
+      "syncopated bass",
+      "octave jumps"
+    ],
+    "melody": [
+      "catchy hook",
+      "chord progression",
+      "arpeggio"
+    ],
+    "drums": [
+      "drum pattern",
+      "hi-hat pattern",
+      "kick pattern"
+    ]
+  }
+}

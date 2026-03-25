@@ -5,6 +5,7 @@ from app.database import (
     get_pack,
     get_packs,
     get_purchase,
+    get_purchase_by_id,
     get_stats,
     init_db,
     update_purchase_status,
@@ -22,12 +23,12 @@ def test_database_crud(tmp_path, monkeypatch):
 
     pack_id = add_pack(
         name="Pack One",
-        genre="Drill",
-        price_stars=250,
         description="Desc",
-        zip_key="packs/1/pack.zip",
-        cover_key="packs/1/cover.jpg",
-        demo_keys=["packs/1/demos/demo_1.mp3"],
+        price_starter=100,
+        price_producer=300,
+        price_collector=600,
+        s3_key="packs/1/pack.zip",
+        demo_urls=["packs/1/demos/demo_1.mp3"],
     )
 
     pack = get_pack(pack_id)
@@ -40,17 +41,18 @@ def test_database_crud(tmp_path, monkeypatch):
 
     purchase_id = add_purchase(
         user_id=12345,
-        product_id=pack_id,
-        stars_amount=250,
+        pack_id=pack_id,
+        license_type="producer",
+        stars_amount=300,
         status="pending",
     )
 
-    purchase = get_purchase(purchase_id)
+    purchase = get_purchase_by_id(purchase_id)
     assert purchase is not None
     assert purchase["status"] == "pending"
 
     update_purchase_status(purchase_id, "completed", telegram_payment_charge_id="chg_123")
-    completed = get_purchase(purchase_id)
+    completed = get_purchase("chg_123")
     assert completed["status"] == "completed"
     assert completed["telegram_payment_charge_id"] == "chg_123"
 
@@ -58,7 +60,6 @@ def test_database_crud(tmp_path, monkeypatch):
     assert len(all_packs) == 1
 
     stats = get_stats()
-    assert stats["products_count"] == 1
+    assert stats["packs_count"] == 1
     assert stats["purchases_count"] == 1
-    assert stats["completed_purchases"] == 1
-    assert stats["stars_total"] == 250
+    assert stats["revenue_stars"] == 300

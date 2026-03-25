@@ -1,0 +1,52 @@
+[
+  {
+    "name": "afro house",
+    "bpm_min": 118,
+    "bpm_max": 124,
+    "keys": [
+      "G minor",
+      "E minor",
+      "D minor"
+    ]
+  },
+  {
+    "name": "speed garage",
+    "bpm_min": 130,
+    "bpm_max": 138,
+    "keys": [
+      "F minor",
+      "G minor",
+      "A# minor"
+    ]
+  },
+  {
+    "name": "rage/pluggnb",
+    "bpm_min": 136,
+    "bpm_max": 152,
+    "keys": [
+      "F# minor",
+      "D# minor",
+      "C minor"
+    ]
+  },
+  {
+    "name": "tech house",
+    "bpm_min": 124,
+    "bpm_max": 130,
+    "keys": [
+      "F minor",
+      "A minor",
+      "D minor"
+    ]
+  },
+  {
+    "name": "lo-fi",
+    "bpm_min": 70,
+    "bpm_max": 92,
+    "keys": [
+      "C major",
+      "A minor",
+      "E minor"
+    ]
+  }
+]

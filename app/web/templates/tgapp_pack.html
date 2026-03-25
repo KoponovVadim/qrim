@@ -21,13 +21,14 @@
       <div class="card-body p-4">
         <div class="d-flex justify-content-between gap-3 flex-wrap align-items-start">
           <div>
-            <span class="badge text-bg-dark mb-2">{{ pack.genre }}</span>
             <h1 class="h3 fw-bold mb-2">{{ pack.name }}</h1>
             <p class="text-secondary mb-0">{{ pack.description }}</p>
           </div>
-          <div class="price-box p-3 rounded-4 text-center">
-            <div class="small text-secondary">Price</div>
-            <div class="h4 mb-1">{{ pack.price_stars }} Stars</div>
+          <div class="price-box p-3 rounded-4">
+            <div class="small text-secondary">Prices</div>
+            <div>Starter: <strong>{{ pack.price_starter }}⭐</strong></div>
+            <div>Producer: <strong>{{ pack.price_producer }}⭐</strong></div>
+            <div>Collector: <strong>{{ pack.price_collector }}⭐</strong></div>
           </div>
         </div>
 
@@ -35,10 +36,21 @@
 
         <div class="d-flex gap-2 flex-wrap mb-3">
           <button class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#demoModal">Listen demo</button>
+          {% if bot_username %}
+          <a class="btn btn-success" href="https://t.me/{{ bot_username }}?start=buy_{{ pack.id }}_starter">Buy Starter</a>
+          <a class="btn btn-primary" href="https://t.me/{{ bot_username }}?start=buy_{{ pack.id }}_producer">Buy Producer</a>
+          <a class="btn btn-dark" href="https://t.me/{{ bot_username }}?start=buy_{{ pack.id }}_collector">Buy Collector</a>
+          {% endif %}
         </div>
 
         <div class="small text-secondary">
-          To pay with Telegram Stars, open this pack in the bot and tap Buy with Stars.
+          Payments are processed in the bot via Telegram Stars invoices.
+          {% if not bot_username %}
+          Send one of these commands in bot chat:<br />
+          <code>/buy_{{ pack.id }}_starter</code>,
+          <code>/buy_{{ pack.id }}_producer</code>,
+          <code>/buy_{{ pack.id }}_collector</code>
+          {% endif %}
         </div>
       </div>
     </div>

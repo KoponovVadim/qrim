@@ -1,17 +1,17 @@
 {% extends "base.html" %}
 
-{% block title %}Заказы{% endblock %}
+{% block title %}Purchases{% endblock %}
 
 {% block content %}
 <div class="row-between">
-  <h2>Заказы</h2>
+  <h2>Purchases</h2>
   <form method="get" action="/orders" class="inline-form">
     <select name="status">
-      <option value="" {% if not status %}selected{% endif %}>Все</option>
+      <option value="" {% if not status %}selected{% endif %}>All</option>
       <option value="pending" {% if status == 'pending' %}selected{% endif %}>pending</option>
       <option value="completed" {% if status == 'completed' %}selected{% endif %}>completed</option>
     </select>
-    <button class="button small" type="submit">Фильтр</button>
+    <button class="button small" type="submit">Filter</button>
   </form>
 </div>
 
@@ -20,12 +20,13 @@
     <tr>
       <th>ID</th>
       <th>User ID</th>
-      <th>Пак</th>
+      <th>Pack</th>
+      <th>License</th>
       <th>Stars</th>
       <th>Charge ID</th>
-      <th>Статус</th>
-      <th>Дата</th>
-      <th>Действие</th>
+      <th>Status</th>
+      <th>Date</th>
+      <th>Action</th>
     </tr>
   </thead>
   <tbody>
@@ -33,7 +34,8 @@
     <tr>
       <td>{{ o.id }}</td>
       <td>{{ o.user_id }}</td>
-      <td>{{ o.product_name or o.product_id }}</td>
+      <td>{{ o.pack_name or o.pack_id }}</td>
+      <td>{{ o.license_type }}</td>
       <td>{{ o.stars_amount }}</td>
       <td>{{ o.telegram_payment_charge_id or '-' }}</td>
       <td>{{ o.status }}</td>
@@ -41,7 +43,7 @@
       <td>
         {% if o.status == 'pending' %}
         <form action="/orders/{{ o.id }}/confirm" method="post" class="inline-form">
-          <button class="button small" type="submit">Подтвердить</button>
+          <button class="button small" type="submit">Confirm</button>
         </form>
         {% else %}
         -

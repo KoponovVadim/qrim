@@ -5,9 +5,8 @@ from aiogram.types import Message
 from app.config import get_settings
 from app.database import (
     get_pack,
-    get_purchase,
+    get_purchase_by_id,
     get_stats,
-    increment_pack_sold,
     is_admin,
     update_purchase_status,
 )
@@ -31,11 +30,9 @@ async def cmd_stats(message: Message) -> None:
     stats = get_stats()
     await message.answer(
         "Stats:\n"
-        f"Products: {stats['products_count']}\n"
+        f"Packs: {stats['packs_count']}\n"
         f"Purchases: {stats['purchases_count']}\n"
-        f"Completed: {stats['completed_purchases']}\n"
-        f"Pending: {stats['pending_purchases']}\n"
-        f"Total Stars: {stats['stars_total']}"
+        f"Revenue: {stats['revenue_stars']}⭐"
     )
 
 
@@ -50,7 +47,7 @@ async def cmd_confirm(message: Message) -> None:
         return
 
     purchase_id = int(parts[1])
-    purchase = get_purchase(purchase_id)
+    purchase = get_purchase_by_id(purchase_id)
     if not purchase:
         await message.answer("Purchase not found.")
         return
@@ -59,20 +56,19 @@ async def cmd_confirm(message: Message) -> None:
         await message.answer("Purchase is already completed.")
         return
 
-    pack = get_pack(int(purchase["product_id"]))
+    pack = get_pack(int(purchase["pack_id"]))
     if not pack:
-        await message.answer("Product not found.")
+        await message.answer("Pack not found.")
         return
 
     s3 = get_s3_client()
     try:
-        url = s3.generate_download_url(pack["zip_key"], expires_in=86400)
+        url = s3.generate_download_url(pack["s3_key"], expires_in=86400)
     except Exception:
         await message.answer("Could not generate download link.")
         return
 
     update_purchase_status(purchase_id, "completed")
-    increment_pack_sold(int(purchase["product_id"]))
 
     try:
         await message.bot.send_message(

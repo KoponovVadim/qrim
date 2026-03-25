@@ -1,0 +1,140 @@
+packs:
+  - name: "Afro House Vol.1"
+    pack_id: "afro_house_vol1"
+    style: "afro house"
+    description: "Deep rhythmic loops, organic percussion, and warm basslines"
+    price_starter: 100
+    price_producer: 300
+    price_collector: 600
+    target_counts: {loops: 40, oneshots: 60, midi: 20}
+    demo_tracks: 3
+  - name: "Afro House Vol.2"
+    pack_id: "afro_house_vol2"
+    style: "afro house"
+    description: "Organic tops, tribal grooves, and rolling low-end motifs"
+    price_starter: 100
+    price_producer: 300
+    price_collector: 600
+    target_counts: {loops: 40, oneshots: 60, midi: 20}
+    demo_tracks: 3
+  - name: "Afro House Vol.3"
+    pack_id: "afro_house_vol3"
+    style: "afro house"
+    description: "Festival-ready rhythms, melodic hooks, and punchy percussion"
+    price_starter: 100
+    price_producer: 300
+    price_collector: 600
+    target_counts: {loops: 40, oneshots: 60, midi: 20}
+    demo_tracks: 3
+
+  - name: "Speed Garage Vol.1"
+    pack_id: "speed_garage_vol1"
+    style: "speed garage"
+    description: "Fast-paced garage beats, pitched vocals, and heavy bass"
+    price_starter: 100
+    price_producer: 300
+    price_collector: 600
+    target_counts: {loops: 40, oneshots: 60, midi: 20}
+    demo_tracks: 3
+  - name: "Speed Garage Vol.2"
+    pack_id: "speed_garage_vol2"
+    style: "speed garage"
+    description: "Swingy drums, warped stabs, and rave-inspired movement"
+    price_starter: 100
+    price_producer: 300
+    price_collector: 600
+    target_counts: {loops: 40, oneshots: 60, midi: 20}
+    demo_tracks: 3
+  - name: "Speed Garage Vol.3"
+    pack_id: "speed_garage_vol3"
+    style: "speed garage"
+    description: "Underground pressure with chopped vocals and rolling subs"
+    price_starter: 100
+    price_producer: 300
+    price_collector: 600
+    target_counts: {loops: 40, oneshots: 60, midi: 20}
+    demo_tracks: 3
+
+  - name: "Rage Pluggnb Vol.1"
+    pack_id: "rage_pluggnb_vol1"
+    style: "rage/pluggnb"
+    description: "Distorted 808 textures, airy synth hooks, and digital bounce"
+    price_starter: 100
+    price_producer: 300
+    price_collector: 600
+    target_counts: {loops: 40, oneshots: 60, midi: 20}
+    demo_tracks: 3
+  - name: "Rage Pluggnb Vol.2"
+    pack_id: "rage_pluggnb_vol2"
+    style: "rage/pluggnb"
+    description: "Hyper-digital drums, bright plucks, and cinematic drops"
+    price_starter: 100
+    price_producer: 300
+    price_collector: 600
+    target_counts: {loops: 40, oneshots: 60, midi: 20}
+    demo_tracks: 3
+  - name: "Rage Pluggnb Vol.3"
+    pack_id: "rage_pluggnb_vol3"
+    style: "rage/pluggnb"
+    description: "Chaotic energy with wide leads and modern trap movement"
+    price_starter: 100
+    price_producer: 300
+    price_collector: 600
+    target_counts: {loops: 40, oneshots: 60, midi: 20}
+    demo_tracks: 3
+
+  - name: "Tech House Vol.1"
+    pack_id: "tech_house_vol1"
+    style: "tech house"
+    description: "Club-ready grooves, tight percussion, and rolling bass loops"
+    price_starter: 100
+    price_producer: 300
+    price_collector: 600
+    target_counts: {loops: 40, oneshots: 60, midi: 20}
+    demo_tracks: 3
+  - name: "Tech House Vol.2"
+    pack_id: "tech_house_vol2"
+    style: "tech house"
+    description: "Minimal hooks, crisp hats, and warehouse-ready patterns"
+    price_starter: 100
+    price_producer: 300
+    price_collector: 600
+    target_counts: {loops: 40, oneshots: 60, midi: 20}
+    demo_tracks: 3
+  - name: "Tech House Vol.3"
+    pack_id: "tech_house_vol3"
+    style: "tech house"
+    description: "Driving low-end tools and functional dancefloor arrangements"
+    price_starter: 100
+    price_producer: 300
+    price_collector: 600
+    target_counts: {loops: 40, oneshots: 60, midi: 20}
+    demo_tracks: 3
+
+  - name: "Lo-Fi Vol.1"
+    pack_id: "lofi_vol1"
+    style: "lo-fi"
+    description: "Dusty textures, mellow drums, and warm harmonic motifs"
+    price_starter: 100
+    price_producer: 300
+    price_collector: 600
+    target_counts: {loops: 40, oneshots: 60, midi: 20}
+    demo_tracks: 3
+  - name: "Lo-Fi Vol.2"
+    pack_id: "lofi_vol2"
+    style: "lo-fi"
+    description: "Tape-flavored chords, soft transients, and chill movement"
+    price_starter: 100
+    price_producer: 300
+    price_collector: 600
+    target_counts: {loops: 40, oneshots: 60, midi: 20}
+    demo_tracks: 3
+  - name: "Lo-Fi Vol.3"
+    pack_id: "lofi_vol3"
+    style: "lo-fi"
+    description: "Warm pianos, lazy drums, and nostalgic melodic fragments"
+    price_starter: 100
+    price_producer: 300
+    price_collector: 600
+    target_counts: {loops: 40, oneshots: 60, midi: 20}
+    demo_tracks: 3
