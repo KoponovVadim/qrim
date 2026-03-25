@@ -1,13 +1,13 @@
 from app.config import get_settings
 from app.database import (
-    add_order,
     add_pack,
-    get_order,
+    add_purchase,
     get_pack,
     get_packs,
+    get_purchase,
     get_stats,
     init_db,
-    update_order_status,
+    update_purchase_status,
     update_pack,
 )
 
@@ -15,7 +15,7 @@ from app.database import (
 def test_database_crud(tmp_path, monkeypatch):
     db_path = tmp_path / "test.db"
     monkeypatch.setenv("DATABASE_PATH", str(db_path))
-    monkeypatch.setenv("ADMIN_IDS", "")
+    monkeypatch.setenv("ADMIN_IDS", "[]")
     get_settings.cache_clear()
 
     init_db()
@@ -23,8 +23,7 @@ def test_database_crud(tmp_path, monkeypatch):
     pack_id = add_pack(
         name="Pack One",
         genre="Drill",
-        price_usdt=25,
-        price_ton=9,
+        price_stars=250,
         description="Desc",
         zip_key="packs/1/pack.zip",
         cover_key="packs/1/cover.jpg",
@@ -39,26 +38,27 @@ def test_database_crud(tmp_path, monkeypatch):
     updated = get_pack(pack_id)
     assert updated["name"] == "Pack X"
 
-    order_id = add_order(
+    purchase_id = add_purchase(
         user_id=12345,
-        pack_id=pack_id,
-        payment_method="USDT",
-        tx_hash="0x123456",
-        amount=25,
+        product_id=pack_id,
+        stars_amount=250,
         status="pending",
     )
 
-    order = get_order(order_id)
-    assert order is not None
-    assert order["status"] == "pending"
+    purchase = get_purchase(purchase_id)
+    assert purchase is not None
+    assert purchase["status"] == "pending"
 
-    update_order_status(order_id, "completed")
-    assert get_order(order_id)["status"] == "completed"
+    update_purchase_status(purchase_id, "completed", telegram_payment_charge_id="chg_123")
+    completed = get_purchase(purchase_id)
+    assert completed["status"] == "completed"
+    assert completed["telegram_payment_charge_id"] == "chg_123"
 
     all_packs = get_packs()
     assert len(all_packs) == 1
 
     stats = get_stats()
-    assert stats["packs_count"] == 1
-    assert stats["orders_count"] == 1
-    assert stats["completed_orders"] == 1
+    assert stats["products_count"] == 1
+    assert stats["purchases_count"] == 1
+    assert stats["completed_purchases"] == 1
+    assert stats["stars_total"] == 250

@@ -6,16 +6,14 @@ from pydantic import BaseModel
 class PackCreate(BaseModel):
     name: str
     genre: str
-    price_usdt: float
-    price_ton: float
+    price_stars: int
     description: str = ""
 
 
 class PackUpdate(BaseModel):
     name: str | None = None
     genre: str | None = None
-    price_usdt: float | None = None
-    price_ton: float | None = None
+    price_stars: int | None = None
     description: str | None = None
     zip_key: str | None = None
     cover_key: str | None = None
@@ -26,8 +24,7 @@ class PackOut(BaseModel):
     id: int
     name: str
     genre: str
-    price_usdt: float
-    price_ton: float
+    price_stars: int
     description: str
     zip_key: str
     cover_key: str | None
@@ -36,20 +33,20 @@ class PackOut(BaseModel):
     sold: int
 
 
-class OrderOut(BaseModel):
+class PurchaseOut(BaseModel):
     id: int
     user_id: int
-    pack_id: int
-    payment_method: str
-    tx_hash: str
-    amount: float
+    product_id: int
+    stars_amount: int
     status: str
+    telegram_payment_charge_id: str | None
     created_at: datetime
+    completed_at: datetime | None = None
 
 
 class StatsOut(BaseModel):
-    packs_count: int
-    orders_count: int
-    completed_orders: int
-    pending_orders: int
-    revenue_total: float
+    products_count: int
+    purchases_count: int
+    completed_purchases: int
+    pending_purchases: int
+    stars_total: int

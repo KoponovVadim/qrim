@@ -10,19 +10,18 @@ from starlette.middleware.sessions import SessionMiddleware
 from app.config import get_settings
 from app.database import (
     add_pack,
-    add_order,
+    add_purchase,
     delete_pack,
     get_admins,
-    get_order,
-    get_orders,
+    get_purchase,
+    get_purchases,
     get_pack,
     get_packs,
-    get_user_orders,
-    get_setting,
+    get_user_purchases,
     get_stats,
     increment_pack_sold,
     init_db,
-    update_order_status,
+    update_purchase_status,
     update_pack,
 )
 from app.s3_client import get_s3_client
@@ -49,24 +48,23 @@ async def _send_download_link(user_id: int, url: str) -> None:
     try:
         await bot.send_message(
             chat_id=user_id,
-            text=f"Оплата подтверждена. Ссылка на скачивание (1 час):\n{url}",
+            text=f"Payment confirmed. Download link (24 hours):\n{url}",
         )
     finally:
         await bot.session.close()
 
 
-async def _notify_admins(order: dict[str, Any], pack_name: str = "") -> None:
+async def _notify_admins(purchase: dict[str, Any], product_name: str = "") -> None:
     if not settings.BOT_TOKEN:
         return
 
     text = (
-        f"Новый заказ #{order['id']}\n"
-        f"User ID: {order['user_id']}\n"
-        f"Пак: {pack_name or order['pack_id']}\n"
-        f"Метод: {order['payment_method']}\n"
-        f"Сумма: {order['amount']}\n"
-        f"TX: {order['tx_hash']}\n"
-        f"Панель: {settings.PANEL_BASE_URL}/orders"
+        f"New purchase #{purchase['id']}\n"
+        f"User ID: {purchase['user_id']}\n"
+        f"Product: {product_name or purchase['product_id']}\n"
+        f"Stars: {purchase['stars_amount']}\n"
+        f"Status: {purchase['status']}\n"
+        f"Panel: {settings.PANEL_BASE_URL}/orders"
     )
 
     bot = Bot(token=settings.BOT_TOKEN)
@@ -128,8 +126,6 @@ async def tgapp_home(request: Request, init_data: str = ""):
             "packs": packs,
             "user_id": user_id,
             "init_data": init_data,
-            "usdt_wallet": settings.USDT_WALLET,
-            "ton_wallet": settings.TON_WALLET,
         },
     )
 
@@ -151,8 +147,6 @@ async def tgapp_pack_page(request: Request, pack_id: int, init_data: str = ""):
             "pack": pack,
             "user_id": user_id,
             "init_data": init_data,
-            "usdt_wallet": settings.USDT_WALLET,
-            "ton_wallet": settings.TON_WALLET,
         },
     )
 
@@ -166,7 +160,7 @@ async def tgapp_orders_page(request: Request, init_data: str = ""):
             {"request": request, "orders": [], "user_id": None, "init_data": init_data},
         )
 
-    orders = get_user_orders(user_id=user_id, limit=200, offset=0)
+    orders = get_user_purchases(user_id=user_id, limit=200, offset=0)
     return templates.TemplateResponse(
         "tgapp_orders.html",
         {"request": request, "orders": orders, "user_id": user_id, "init_data": init_data},
@@ -176,8 +170,6 @@ async def tgapp_orders_page(request: Request, init_data: str = ""):
 @app.post("/app/order")
 async def tgapp_create_order(
     pack_id: int = Form(...),
-    payment_method: str = Form(...),
-    tx_hash: str = Form(...),
     init_data: str = Form(...),
 ):
     user_id = _tg_user_id_from_init_data(init_data)
@@ -188,35 +180,23 @@ async def tgapp_create_order(
     if not pack:
         return JSONResponse({"ok": False, "error": "pack_not_found"}, status_code=404)
 
-    payment_method_u = payment_method.upper()
-    if payment_method_u not in {"USDT", "TON"}:
-        return JSONResponse({"ok": False, "error": "invalid_payment_method"}, status_code=400)
-
-    tx_hash_clean = tx_hash.strip()
-    if len(tx_hash_clean) < 8:
-        return JSONResponse({"ok": False, "error": "invalid_tx_hash"}, status_code=400)
-
-    amount = float(pack["price_usdt"] if payment_method_u == "USDT" else pack["price_ton"])
-
-    order_id = add_order(
+    stars_amount = int(pack["price_stars"])
+    purchase_id = add_purchase(
         user_id=user_id,
-        pack_id=pack_id,
-        payment_method=payment_method_u,
-        tx_hash=tx_hash_clean,
-        amount=amount,
+        product_id=pack_id,
+        stars_amount=stars_amount,
         status="pending",
     )
-    order = get_order(order_id)
-    if order:
-        await _notify_admins(order, pack_name=pack.get("name", ""))
+    purchase = get_purchase(purchase_id)
+    if purchase:
+        await _notify_admins(purchase, product_name=pack.get("name", ""))
 
     return JSONResponse(
         {
             "ok": True,
-            "order_id": order_id,
+            "order_id": purchase_id,
             "status": "pending",
-            "payment_method": payment_method_u,
-            "amount": amount,
+            "stars_amount": stars_amount,
         }
     )
 
@@ -283,8 +263,7 @@ async def packs_add_action(
     request: Request,
     name: str = Form(...),
     genre: str = Form(...),
-    price_usdt: float = Form(...),
-    price_ton: float = Form(...),
+    price_stars: int = Form(...),
     description: str = Form(default=""),
     zip_file: UploadFile = Form(...),
     cover_file: UploadFile | None = Form(default=None),
@@ -299,8 +278,7 @@ async def packs_add_action(
     pack_id = add_pack(
         name=name,
         genre=genre,
-        price_usdt=price_usdt,
-        price_ton=price_ton,
+        price_stars=price_stars,
         description=description,
         zip_key="",
         cover_key=None,
@@ -361,8 +339,7 @@ async def packs_edit_action(
     pack_id: int,
     name: str = Form(...),
     genre: str = Form(...),
-    price_usdt: float = Form(...),
-    price_ton: float = Form(...),
+    price_stars: int = Form(...),
     description: str = Form(default=""),
     zip_file: UploadFile | None = Form(default=None),
     cover_file: UploadFile | None = Form(default=None),
@@ -380,8 +357,7 @@ async def packs_edit_action(
     updates: dict[str, Any] = {
         "name": name,
         "genre": genre,
-        "price_usdt": price_usdt,
-        "price_ton": price_ton,
+        "price_stars": int(price_stars),
         "description": description,
     }
 
@@ -467,7 +443,7 @@ async def orders_page(request: Request, status: str = ""):
     if redirect:
         return redirect
 
-    orders = get_orders(status=status or None, limit=500, offset=0)
+    orders = get_purchases(status=status or None, limit=500, offset=0)
     return templates.TemplateResponse(
         "orders.html",
         {"request": request, "orders": orders, "status": status},
@@ -480,42 +456,25 @@ async def confirm_order(request: Request, order_id: int):
     if redirect:
         return redirect
 
-    order = get_order(order_id)
-    if not order:
+    purchase = get_purchase(order_id)
+    if not purchase:
         return RedirectResponse(url="/orders", status_code=303)
 
-    if order["status"] == "completed":
+    if purchase["status"] == "completed":
         return RedirectResponse(url="/orders", status_code=303)
 
-    pack = get_pack(order["pack_id"])
-    if not pack and order["payment_method"] != "BUNDLE_USDT":
+    pack = get_pack(int(purchase["product_id"]))
+    if not pack:
         return RedirectResponse(url="/orders", status_code=303)
 
     s3 = get_s3_client()
     try:
-        if order["payment_method"] == "BUNDLE_USDT":
-            bundle_raw = get_setting(f"order_bundle_{order_id}", "") or ""
-            bundle_ids = [int(v) for v in bundle_raw.split(",") if v.strip().isdigit()]
-            urls: list[str] = []
-            for pack_id in bundle_ids:
-                p = get_pack(pack_id)
-                if not p:
-                    continue
-                urls.append(s3.generate_download_url(p["zip_key"], expires_in=3600))
-            url = "\n".join(urls)
-        else:
-            url = s3.generate_download_url(pack["zip_key"], expires_in=3600)
+        url = s3.generate_download_url(pack["zip_key"], expires_in=86400)
     except Exception:
         return RedirectResponse(url="/orders", status_code=303)
 
-    update_order_status(order_id, "completed")
-    if order["payment_method"] == "BUNDLE_USDT":
-        bundle_raw = get_setting(f"order_bundle_{order_id}", "") or ""
-        bundle_ids = [int(v) for v in bundle_raw.split(",") if v.strip().isdigit()]
-        for pack_id in bundle_ids:
-            increment_pack_sold(pack_id)
-    else:
-        increment_pack_sold(order["pack_id"])
-    await _send_download_link(order["user_id"], url)
+    update_purchase_status(order_id, "completed")
+    increment_pack_sold(int(purchase["product_id"]))
+    await _send_download_link(int(purchase["user_id"]), url)
 
     return RedirectResponse(url="/orders", status_code=303)

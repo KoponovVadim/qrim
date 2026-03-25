@@ -10,10 +10,6 @@ class Settings(BaseSettings):
     BOT_TOKEN: str = ""
     ADMIN_IDS: list[int] = Field(default_factory=list)
 
-    USDT_WALLET: str = ""
-    TON_WALLET: str = ""
-    TRON_API_KEY: str = ""
-
     S3_ENDPOINT: str = ""
     S3_ACCESS_KEY: str = ""
     S3_SECRET_KEY: str = ""
@@ -26,11 +22,8 @@ class Settings(BaseSettings):
     WEB_SECRET_KEY: str = "change_me_too"
 
     DATABASE_PATH: str = "/data/app.db"
-    FREE_PACK_KEY: str = "free/free_pack.zip"
     PANEL_BASE_URL: str = "http://localhost:8000"
     WEB_APP_URL: str = "http://localhost:8000/app"
-    SUBSCRIPTION_DAYS: int = 30
-    SUBSCRIPTION_PRICE_USDT: float = 29.0
 
     @field_validator("ADMIN_IDS", mode="before")
     @classmethod

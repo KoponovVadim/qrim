@@ -1,7 +1,7 @@
 import json
 import sqlite3
 from contextlib import closing
-from datetime import datetime, timedelta
+from datetime import datetime
 from threading import Lock
 from typing import Any
 
@@ -28,12 +28,11 @@ def init_db() -> None:
     with _DB_LOCK, closing(_get_connection()) as conn:
         conn.executescript(
             """
-            CREATE TABLE IF NOT EXISTS packs (
+            CREATE TABLE IF NOT EXISTS products (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
                 genre TEXT NOT NULL,
-                price_usdt REAL NOT NULL DEFAULT 0,
-                price_ton REAL NOT NULL DEFAULT 0,
+                price_stars INTEGER NOT NULL DEFAULT 0,
                 description TEXT NOT NULL DEFAULT '',
                 zip_key TEXT NOT NULL,
                 cover_key TEXT,
@@ -42,17 +41,22 @@ def init_db() -> None:
                 sold INTEGER NOT NULL DEFAULT 0
             );
 
-            CREATE TABLE IF NOT EXISTS orders (
+            CREATE TABLE IF NOT EXISTS purchases (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER NOT NULL,
-                pack_id INTEGER NOT NULL,
-                payment_method TEXT NOT NULL,
-                tx_hash TEXT NOT NULL,
-                amount REAL NOT NULL,
+                product_id INTEGER NOT NULL,
+                stars_amount INTEGER NOT NULL,
                 status TEXT NOT NULL,
+                telegram_payment_charge_id TEXT,
                 created_at TEXT NOT NULL,
-                FOREIGN KEY(pack_id) REFERENCES packs(id)
+                completed_at TEXT,
+                FOREIGN KEY(product_id) REFERENCES products(id)
             );
+
+            CREATE INDEX IF NOT EXISTS idx_purchases_user_id ON purchases(user_id);
+            CREATE INDEX IF NOT EXISTS idx_purchases_product_id ON purchases(product_id);
+            CREATE INDEX IF NOT EXISTS idx_purchases_status ON purchases(status);
+            CREATE INDEX IF NOT EXISTS idx_purchases_tg_charge ON purchases(telegram_payment_charge_id);
 
             CREATE TABLE IF NOT EXISTS settings (
                 key TEXT PRIMARY KEY,
@@ -61,13 +65,6 @@ def init_db() -> None:
 
             CREATE TABLE IF NOT EXISTS admins (
                 user_id INTEGER PRIMARY KEY
-            );
-
-            CREATE TABLE IF NOT EXISTS subscriptions (
-                user_id INTEGER PRIMARY KEY,
-                start_date TEXT NOT NULL,
-                end_date TEXT NOT NULL,
-                status TEXT NOT NULL
             );
             """
         )
@@ -81,8 +78,7 @@ def init_db() -> None:
 def add_pack(
     name: str,
     genre: str,
-    price_usdt: float,
-    price_ton: float,
+    price_stars: int,
     description: str,
     zip_key: str,
     cover_key: str | None = None,
@@ -94,10 +90,10 @@ def add_pack(
     with _DB_LOCK, closing(_get_connection()) as conn:
         cur = conn.execute(
             """
-            INSERT INTO packs(name, genre, price_usdt, price_ton, description, zip_key, cover_key, demo_keys, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO products(name, genre, price_stars, description, zip_key, cover_key, demo_keys, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            (name, genre, price_usdt, price_ton, description, zip_key, cover_key, json.dumps(demo_keys), now),
+            (name, genre, int(price_stars), description, zip_key, cover_key, json.dumps(demo_keys), now),
         )
         conn.commit()
         return int(cur.lastrowid)
@@ -105,7 +101,7 @@ def add_pack(
 
 def get_pack(pack_id: int) -> dict[str, Any] | None:
     with closing(_get_connection()) as conn:
-        row = conn.execute("SELECT * FROM packs WHERE id = ?", (pack_id,)).fetchone()
+        row = conn.execute("SELECT * FROM products WHERE id = ?", (pack_id,)).fetchone()
     item = _to_dict(row)
     if item:
         item["demo_keys"] = json.loads(item.get("demo_keys") or "[]")
@@ -115,7 +111,7 @@ def get_pack(pack_id: int) -> dict[str, Any] | None:
 def get_packs(limit: int = 50, offset: int = 0) -> list[dict[str, Any]]:
     with closing(_get_connection()) as conn:
         rows = conn.execute(
-            "SELECT * FROM packs ORDER BY id DESC LIMIT ? OFFSET ?",
+            "SELECT * FROM products ORDER BY id DESC LIMIT ? OFFSET ?",
             (limit, offset),
         ).fetchall()
     result = []
@@ -140,7 +136,7 @@ def update_pack(pack_id: int, **fields: Any) -> bool:
 
     with _DB_LOCK, closing(_get_connection()) as conn:
         cur = conn.execute(
-            f"UPDATE packs SET {assignments} WHERE id = ?",
+            f"UPDATE products SET {assignments} WHERE id = ?",
             (*values, pack_id),
         )
         conn.commit()
@@ -149,50 +145,49 @@ def update_pack(pack_id: int, **fields: Any) -> bool:
 
 def delete_pack(pack_id: int) -> bool:
     with _DB_LOCK, closing(_get_connection()) as conn:
-        cur = conn.execute("DELETE FROM packs WHERE id = ?", (pack_id,))
+        cur = conn.execute("DELETE FROM products WHERE id = ?", (pack_id,))
         conn.commit()
         return cur.rowcount > 0
 
 
-def add_order(
+def add_purchase(
     user_id: int,
-    pack_id: int,
-    payment_method: str,
-    tx_hash: str,
-    amount: float,
+    product_id: int,
+    stars_amount: int,
     status: str = "pending",
+    telegram_payment_charge_id: str | None = None,
 ) -> int:
     now = datetime.utcnow().isoformat()
     with _DB_LOCK, closing(_get_connection()) as conn:
         cur = conn.execute(
             """
-            INSERT INTO orders(user_id, pack_id, payment_method, tx_hash, amount, status, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO purchases(user_id, product_id, stars_amount, status, telegram_payment_charge_id, created_at, completed_at)
+            VALUES (?, ?, ?, ?, ?, ?, NULL)
             """,
-            (user_id, pack_id, payment_method, tx_hash, amount, status, now),
+            (user_id, product_id, int(stars_amount), status, telegram_payment_charge_id, now),
         )
         conn.commit()
         return int(cur.lastrowid)
 
 
-def get_order(order_id: int) -> dict[str, Any] | None:
+def get_purchase(purchase_id: int) -> dict[str, Any] | None:
     with closing(_get_connection()) as conn:
-        row = conn.execute("SELECT * FROM orders WHERE id = ?", (order_id,)).fetchone()
+        row = conn.execute("SELECT * FROM purchases WHERE id = ?", (purchase_id,)).fetchone()
     return _to_dict(row)
 
 
-def get_orders(status: str | None = None, limit: int = 100, offset: int = 0) -> list[dict[str, Any]]:
+def get_purchases(status: str | None = None, limit: int = 100, offset: int = 0) -> list[dict[str, Any]]:
     query = """
-        SELECT o.*, p.name AS pack_name
-        FROM orders o
-        LEFT JOIN packs p ON p.id = o.pack_id
+        SELECT pch.*, pr.name AS product_name
+        FROM purchases pch
+        LEFT JOIN products pr ON pr.id = pch.product_id
     """
     params: list[Any] = []
     if status:
-        query += " WHERE o.status = ?"
+        query += " WHERE pch.status = ?"
         params.append(status)
 
-    query += " ORDER BY o.id DESC LIMIT ? OFFSET ?"
+    query += " ORDER BY pch.id DESC LIMIT ? OFFSET ?"
     params.extend([limit, offset])
 
     with closing(_get_connection()) as conn:
@@ -200,13 +195,13 @@ def get_orders(status: str | None = None, limit: int = 100, offset: int = 0) -> 
     return [dict(row) for row in rows]
 
 
-def get_user_orders(user_id: int, limit: int = 100, offset: int = 0) -> list[dict[str, Any]]:
+def get_user_purchases(user_id: int, limit: int = 100, offset: int = 0) -> list[dict[str, Any]]:
     query = """
-        SELECT o.*, p.name AS pack_name
-        FROM orders o
-        LEFT JOIN packs p ON p.id = o.pack_id
-        WHERE o.user_id = ?
-        ORDER BY o.id DESC
+        SELECT pch.*, pr.name AS product_name
+        FROM purchases pch
+        LEFT JOIN products pr ON pr.id = pch.product_id
+        WHERE pch.user_id = ?
+        ORDER BY pch.id DESC
         LIMIT ? OFFSET ?
     """
     with closing(_get_connection()) as conn:
@@ -214,38 +209,58 @@ def get_user_orders(user_id: int, limit: int = 100, offset: int = 0) -> list[dic
     return [dict(row) for row in rows]
 
 
-def update_order_status(order_id: int, status: str) -> bool:
+def update_purchase_status(
+    purchase_id: int,
+    status: str,
+    telegram_payment_charge_id: str | None = None,
+) -> bool:
     with _DB_LOCK, closing(_get_connection()) as conn:
+        completed_at = datetime.utcnow().isoformat() if status == "completed" else None
         cur = conn.execute(
-            "UPDATE orders SET status = ? WHERE id = ?",
-            (status, order_id),
+            """
+            UPDATE purchases
+            SET status = ?,
+                telegram_payment_charge_id = COALESCE(?, telegram_payment_charge_id),
+                completed_at = CASE WHEN ? IS NOT NULL THEN ? ELSE completed_at END
+            WHERE id = ?
+            """,
+            (status, telegram_payment_charge_id, completed_at, completed_at, purchase_id),
         )
         conn.commit()
         return cur.rowcount > 0
 
 
+def get_purchase_by_charge_id(telegram_payment_charge_id: str) -> dict[str, Any] | None:
+    with closing(_get_connection()) as conn:
+        row = conn.execute(
+            "SELECT * FROM purchases WHERE telegram_payment_charge_id = ?",
+            (telegram_payment_charge_id,),
+        ).fetchone()
+    return _to_dict(row)
+
+
 def increment_pack_sold(pack_id: int) -> None:
     with _DB_LOCK, closing(_get_connection()) as conn:
-        conn.execute("UPDATE packs SET sold = sold + 1 WHERE id = ?", (pack_id,))
+        conn.execute("UPDATE products SET sold = sold + 1 WHERE id = ?", (pack_id,))
         conn.commit()
 
 
 def get_stats() -> dict[str, Any]:
     with closing(_get_connection()) as conn:
-        packs_count = conn.execute("SELECT COUNT(*) FROM packs").fetchone()[0]
-        orders_count = conn.execute("SELECT COUNT(*) FROM orders").fetchone()[0]
-        completed_orders = conn.execute("SELECT COUNT(*) FROM orders WHERE status = 'completed'").fetchone()[0]
-        pending_orders = conn.execute("SELECT COUNT(*) FROM orders WHERE status = 'pending'").fetchone()[0]
-        revenue_total = conn.execute(
-            "SELECT COALESCE(SUM(amount), 0) FROM orders WHERE status = 'completed'"
+        products_count = conn.execute("SELECT COUNT(*) FROM products").fetchone()[0]
+        purchases_count = conn.execute("SELECT COUNT(*) FROM purchases").fetchone()[0]
+        completed_purchases = conn.execute("SELECT COUNT(*) FROM purchases WHERE status = 'completed'").fetchone()[0]
+        pending_purchases = conn.execute("SELECT COUNT(*) FROM purchases WHERE status = 'pending'").fetchone()[0]
+        stars_total = conn.execute(
+            "SELECT COALESCE(SUM(stars_amount), 0) FROM purchases WHERE status = 'completed'"
         ).fetchone()[0]
 
     return {
-        "packs_count": packs_count,
-        "orders_count": orders_count,
-        "completed_orders": completed_orders,
-        "pending_orders": pending_orders,
-        "revenue_total": float(revenue_total or 0),
+        "products_count": products_count,
+        "purchases_count": purchases_count,
+        "completed_purchases": completed_purchases,
+        "pending_purchases": pending_purchases,
+        "stars_total": int(stars_total or 0),
     }
 
 
@@ -282,72 +297,3 @@ def is_admin(user_id: int) -> bool:
     with closing(_get_connection()) as conn:
         row = conn.execute("SELECT 1 FROM admins WHERE user_id = ?", (user_id,)).fetchone()
     return row is not None
-
-
-def get_subscription(user_id: int) -> dict[str, Any] | None:
-    with closing(_get_connection()) as conn:
-        row = conn.execute(
-            "SELECT user_id, start_date, end_date, status FROM subscriptions WHERE user_id = ?",
-            (user_id,),
-        ).fetchone()
-    return _to_dict(row)
-
-
-def has_active_subscription(user_id: int) -> bool:
-    sub = get_subscription(user_id)
-    if not sub:
-        return False
-    if sub.get("status") != "active":
-        return False
-    try:
-        end_dt = datetime.fromisoformat(sub["end_date"])
-    except Exception:
-        return False
-    return end_dt > datetime.utcnow()
-
-
-def create_or_extend_subscription(user_id: int, days: int = 30) -> dict[str, Any]:
-    now = datetime.utcnow()
-    current = get_subscription(user_id)
-    if current and current.get("status") == "active":
-        try:
-            current_end = datetime.fromisoformat(current["end_date"])
-        except Exception:
-            current_end = now
-        start_dt = now
-        base = current_end if current_end > now else now
-        end_dt = base + timedelta(days=days)
-    else:
-        start_dt = now
-        end_dt = now + timedelta(days=days)
-
-    with _DB_LOCK, closing(_get_connection()) as conn:
-        conn.execute(
-            """
-            INSERT INTO subscriptions(user_id, start_date, end_date, status)
-            VALUES (?, ?, ?, 'active')
-            ON CONFLICT(user_id) DO UPDATE SET
-                start_date = excluded.start_date,
-                end_date = excluded.end_date,
-                status = 'active'
-            """,
-            (user_id, start_dt.isoformat(), end_dt.isoformat()),
-        )
-        conn.commit()
-
-    return {
-        "user_id": user_id,
-        "start_date": start_dt.isoformat(),
-        "end_date": end_dt.isoformat(),
-        "status": "active",
-    }
-
-
-def cancel_subscription(user_id: int) -> bool:
-    with _DB_LOCK, closing(_get_connection()) as conn:
-        cur = conn.execute(
-            "UPDATE subscriptions SET status = 'cancelled' WHERE user_id = ?",
-            (user_id,),
-        )
-        conn.commit()
-        return cur.rowcount > 0

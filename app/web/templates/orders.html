@@ -21,9 +21,8 @@
       <th>ID</th>
       <th>User ID</th>
       <th>Пак</th>
-      <th>Метод</th>
-      <th>Сумма</th>
-      <th>TX Hash</th>
+      <th>Stars</th>
+      <th>Charge ID</th>
       <th>Статус</th>
       <th>Дата</th>
       <th>Действие</th>
@@ -34,10 +33,9 @@
     <tr>
       <td>{{ o.id }}</td>
       <td>{{ o.user_id }}</td>
-      <td>{{ o.pack_name or o.pack_id }}</td>
-      <td>{{ o.payment_method }}</td>
-      <td>{{ o.amount }}</td>
-      <td>{{ o.tx_hash }}</td>
+      <td>{{ o.product_name or o.product_id }}</td>
+      <td>{{ o.stars_amount }}</td>
+      <td>{{ o.telegram_payment_charge_id or '-' }}</td>
       <td>{{ o.status }}</td>
       <td>{{ o.created_at }}</td>
       <td>

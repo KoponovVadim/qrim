@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -18,13 +18,7 @@
           <div>
             <span class="badge text-bg-light mb-2">Telegram Mini App</span>
             <h1 class="display-6 fw-bold mb-2">Soundbot Marketplace</h1>
-            <p class="text-secondary mb-0">Слушай демо, оформляй заказ и получай паки прямо внутри Telegram.</p>
-          </div>
-          <div class="text-end">
-            <div class="small text-secondary">USDT</div>
-            <div class="fw-semibold wallet">{{ usdt_wallet }}</div>
-            <div class="small text-secondary mt-2">TON</div>
-            <div class="fw-semibold wallet">{{ ton_wallet }}</div>
+            <p class="text-secondary mb-0">Listen to demos and buy packs with Telegram Stars.</p>
           </div>
         </div>
       </div>
@@ -33,10 +27,10 @@
     <section class="mb-3">
       <div class="row g-2 align-items-center">
         <div class="col-12 col-md-8">
-          <input id="packSearch" class="form-control form-control-lg" placeholder="Поиск по названию или жанру" />
+          <input id="packSearch" class="form-control form-control-lg" placeholder="Search by title or genre" />
         </div>
         <div class="col-12 col-md-4">
-          <a class="btn btn-outline-dark w-100 btn-lg" href="/app/orders">Мои заказы</a>
+          <a class="btn btn-outline-dark w-100 btn-lg" href="/app/orders">My purchases</a>
         </div>
       </div>
     </section>
@@ -60,10 +54,9 @@
               </div>
               <p class="small text-secondary flex-grow-1 mb-2">{{ p.description[:120] }}{% if p.description|length > 120 %}...{% endif %}</p>
               <div class="d-flex justify-content-between align-items-center mb-3">
-                <div class="fw-semibold">{{ p.price_usdt }} USDT</div>
-                <div class="text-secondary small">{{ p.price_ton }} TON</div>
+                <div class="fw-semibold">{{ p.price_stars }} Stars</div>
               </div>
-              <a href="/app/pack/{{ p.id }}" class="btn btn-gradient w-100">Открыть пак</a>
+              <a href="/app/pack/{{ p.id }}" class="btn btn-gradient w-100">Open pack</a>
             </div>
           </article>
         </div>
